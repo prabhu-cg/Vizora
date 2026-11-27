@@ -8,5 +8,5 @@ export const TYPE_META: Record<VisualisationType, { label: string; description: 
   timeline: { label: "Timeline", description: "Events and milestones in order over time.", icon: GanttChart },
   chart: { label: "Chart", description: "Turn a table of data into a chart, with recommendations.", icon: BarChart3 },
   dashboard: { label: "Dashboard", description: "Several charts from your data on one page.", icon: LayoutDashboard },
-  table: { label: "Table", description: "Tabular view of a dataset.", icon: Table2 },
+  table: { label: "Table", description: "Your data as a sortable, filterable table, with shaded numbers.", icon: Table2 },
 };

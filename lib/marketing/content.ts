@@ -95,6 +95,7 @@ export const CAPABILITIES: Capability[] = [
       "Choose the X axis, measures and series, with sum, average, count, minimum or maximum, and group dates by month or year",
       "Edit titles, axis labels, legend, colours, data labels, tooltips, sorting, top-N limits and filters",
       "Inspect the numbers behind any chart, and a profile of each column",
+      "Table view: your data as a sortable, searchable, filterable table, with chosen columns in your order and shaded numbers (colour scale or data bars); export it as CSV or an image of the first 40 rows",
     ],
     next: ["Gantt task dependencies; further chart types such as waterfall, bubble and Sankey", "Custom number and date formats", "Older spreadsheet formats such as .xls"],
   },

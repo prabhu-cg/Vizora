@@ -7,6 +7,8 @@ import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { ProjectView } from "@/components/dashboard/project-view";
 import { RecentView } from "@/components/dashboard/recent-view";
 import { StoragePanel } from "@/components/settings/storage-panel";
+import { TableCentre, TableSettings } from "@/features/tables/table-workspace";
+import { buildDataset, readText } from "@/lib/data";
 import { StorageProvider } from "@/hooks/use-storage";
 import { createVisualisation } from "@/lib/visualisation/factory";
 import { createTestStorage } from "../helpers";
@@ -69,5 +71,13 @@ describe("accessibility (structural rules)", () => {
     expect(await violations()).toEqual([]);
     await userEvent.click(screen.getByRole("button", { name: /Clear local data/ }));
     expect(await violations(await screen.findByRole("alertdialog"))).toEqual([]);
+  });
+
+  it("table view and its settings", async () => {
+    const dataset = buildDataset(readText("name,team,score\nAda,Eng,90\nBo,Ops,45"), {}, () => "d").dataset;
+    const doc = { ...createVisualisation({ title: "People", type: "table" }), data: { datasets: [dataset] } };
+    render(<><TableCentre doc={doc} update={() => undefined} onAddData={() => undefined} /><TableSettings doc={doc} update={() => undefined} /></>);
+    await screen.findByRole("table");
+    expect(await violations()).toEqual([]);
   });
 });

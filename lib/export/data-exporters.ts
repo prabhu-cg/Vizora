@@ -1,5 +1,6 @@
 import { applyFilters, chartTable, datasetOf, resolveChart, runChartQuery } from "@/lib/charts";
 import { toCsv } from "@/lib/data";
+import { buildTableView, readTableConfig } from "@/lib/tables";
 import type { Dataset, VisualisationIR } from "@/types/visualisation";
 import { slugify } from "./slug";
 import type { Exporter } from "./types";
@@ -39,5 +40,21 @@ export const csvDatasetExporter: Exporter = {
     if (!ds) throw new Error("Add data first.");
     const filters = doc.type === "chart" ? (resolveChart(doc)?.config.filters ?? []) : [];
     return { filename: `${slugify(ds.name, "dataset")}.csv`, blob: csvBlob(datasetToCsv(ds, applyFilters(ds, filters))) };
+  },
+};
+
+/** The table exactly as configured: its visible columns, filters and sort, every matching row. */
+export const csvTableExporter: Exporter = {
+  id: "csv-table",
+  label: "Table (CSV)",
+  description: "The table as you have set it up: its columns, filters and sort order, every matching row.",
+  feature: "export.csv",
+  supports: (d) => d.type === "table" && d.data.datasets.length > 0,
+  run(doc) {
+    const config = readTableConfig(doc.configuration.options);
+    const ds = datasetOf(doc, config.datasetId);
+    if (!ds) throw new Error("Add data first.");
+    const view = buildTableView(ds, config);
+    return { filename: `${slugify(doc.title, "table")}-table.csv`, blob: csvBlob(datasetToCsv({ columns: view.columns, rows: view.rows })) };
   },
 };

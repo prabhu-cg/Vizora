@@ -1,16 +1,17 @@
 "use client";
 
-import { ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronRight, RotateCcw } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  AGGREGATIONS, AGG_LABEL, CHART_KINDS, FILTER_OPS, FILTER_OP_LABEL, KIND_META, PALETTES, TIME_BUCKETS, switchKind,
+  AGGREGATIONS, AGG_LABEL, CHART_KINDS, KIND_META, PALETTES, TIME_BUCKETS, switchKind,
   type ChartConfig, type ChartKind, type Recommendation,
 } from "@/lib/charts";
 import type { ChartData } from "@/lib/charts/query";
 import { cn } from "@/lib/utils/cn";
+import { FilterEditor } from "./filter-editor";
 import type { Dataset } from "@/types/visualisation";
 import { FALLBACK_CHART_THEME, colourFor } from "./theme";
 
@@ -306,28 +307,7 @@ export function ChartConfigPanel({
       )}
 
       <Section title={`Filters${config.filters.length ? ` (${config.filters.length})` : ""}`} open={config.filters.length > 0}>
-        {config.filters.length === 0 && <p className="text-xs text-muted-foreground">Show only some rows. Filters affect this chart, never your data.</p>}
-        <ul className="grid gap-3">
-          {config.filters.map((f, i) => {
-            const col = cols.find((c) => c.key === f.column);
-            const noValue = f.op === "empty" || f.op === "notEmpty";
-            return (
-              <li key={i} className="grid gap-1.5 rounded-input border border-border p-2.5">
-                <Select aria-label={`Filter ${i + 1} column`} value={f.column} onChange={(e) => onChange((c) => ({ ...c, filters: c.filters.map((x, j) => (j === i ? { ...x, column: e.target.value } : x)) }))} className="h-9">
-                  {cols.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-                </Select>
-                <Select aria-label={`Filter ${i + 1} condition`} value={f.op} onChange={(e) => onChange((c) => ({ ...c, filters: c.filters.map((x, j) => (j === i ? { ...x, op: e.target.value as typeof f.op } : x)) }))} className="h-9">
-                  {FILTER_OPS.map((o) => <option key={o} value={o}>{FILTER_OP_LABEL[o]}</option>)}
-                </Select>
-                {!noValue && <Input aria-label={`Filter ${i + 1} value`} value={f.value} placeholder={f.op === "in" ? "a, b, c" : col?.type === "date" ? "2026-01-31" : "value"} onChange={(e) => onChange((c) => ({ ...c, filters: c.filters.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)) }), `chart:filter:${i}`)} className="h-9" />}
-                <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => onChange((c) => ({ ...c, filters: c.filters.filter((_, j) => j !== i) }))} aria-label={`Remove filter ${i + 1}`}><Trash2 aria-hidden="true" /> Remove</Button>
-              </li>
-            );
-          })}
-        </ul>
-        <Button variant="outline" size="sm" disabled={cols.length === 0 || config.filters.length >= 20} onClick={() => onChange((c) => ({ ...c, filters: [...c.filters, { column: cols[0]!.key, op: "eq", value: "" }] }))}>
-          <Plus aria-hidden="true" /> Add filter
-        </Button>
+        <FilterEditor cols={cols} filters={config.filters} onChange={(fn, key) => onChange((c) => ({ ...c, filters: fn(c.filters) }), key ? `chart:${key}` : undefined)} />
       </Section>
     </div>
   );

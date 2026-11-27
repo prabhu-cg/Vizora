@@ -1,7 +1,7 @@
 import type { EntitlementService } from "@/features/entitlements";
 import type { VisualisationIR } from "@/types/visualisation";
 import { embedExporter } from "./embed";
-import { csvChartExporter, csvDatasetExporter } from "./data-exporters";
+import { csvChartExporter, csvDatasetExporter, csvTableExporter } from "./data-exporters";
 import { pdfExporter, pngExporter, svgExporter } from "./image-exporters";
 import { jsonExporter } from "./json-exporter";
 import type { ExportArtifact, Exporter } from "./types";
@@ -14,7 +14,7 @@ export interface ExportManager {
 
 export function createExportManager(
   entitlements: EntitlementService,
-  exporters: Exporter[] = [pngExporter, svgExporter, embedExporter, pdfExporter, csvChartExporter, csvDatasetExporter, jsonExporter],
+  exporters: Exporter[] = [pngExporter, svgExporter, embedExporter, pdfExporter, csvChartExporter, csvDatasetExporter, csvTableExporter, jsonExporter],
 ): ExportManager {
   const byId = new Map(exporters.map((e) => [e.id, e]));
   return {

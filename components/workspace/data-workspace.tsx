@@ -4,6 +4,7 @@ import { ChevronRight, Plus, Redo2, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { ChartCentre, ChartSettings } from "@/features/charts/chart-workspace";
+import { TableCentre, TableSettings } from "@/features/tables/table-workspace";
 import { DashboardCentre, WidgetSettings, useDashboard } from "@/features/dashboard/dashboard-workspace";
 import { matchShortcut, shouldHandle } from "@/features/editor/shortcuts";
 import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
@@ -38,6 +39,7 @@ export default function DataWorkspace({ doc, update, undo, redo, canUndo, canRed
   const dashboard = useDashboard(doc, update);
   const [adding, setAdding] = useState(false);
   const isDash = doc.type === "dashboard";
+  const isTable = doc.type === "table";
 
   // Undo and redo from the keyboard, when focus is on the workspace and not in a field or dialog.
   useEffect(() => {
@@ -53,7 +55,7 @@ export default function DataWorkspace({ doc, update, undo, redo, canUndo, canRed
   }, [undo, redo]);
 
   const details = <DetailsPanel key={loadKey} document={doc} onChange={update} />;
-  const kind = isDash ? "Dashboard" : "Chart";
+  const kind = isDash ? "Dashboard" : isTable ? "Table" : "Chart";
 
   return (
     <>
@@ -65,7 +67,18 @@ export default function DataWorkspace({ doc, update, undo, redo, canUndo, canRed
         right={{
           label: "Settings",
           tab: "Settings",
-          node: isDash ? (
+          node: isTable ? (
+            <>
+              <TableSettings doc={doc} update={update} />
+              <details className="group border-b border-border">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
+                  About this table
+                  <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground transition-transform group-open:rotate-90" />
+                </summary>
+                {details}
+              </details>
+            </>
+          ) : isDash ? (
             dashboard.selected ? (
               <WidgetSettings doc={doc} state={dashboard} />
             ) : (
@@ -90,7 +103,7 @@ export default function DataWorkspace({ doc, update, undo, redo, canUndo, canRed
         centre={
           <main id="main" tabIndex={-1} data-editor-canvas aria-label={kind} className="h-full min-h-0 min-w-0 overflow-auto bg-background outline-none">
             <ErrorBoundary resetKey={`${loadKey}:${doc.type}`} title="This could not be drawn">
-              {isDash ? <DashboardCentre doc={doc} state={dashboard} /> : <ChartCentre doc={doc} update={update} onAddData={() => setAdding(true)} />}
+              {isTable ? <TableCentre doc={doc} update={update} onAddData={() => setAdding(true)} /> : isDash ? <DashboardCentre doc={doc} state={dashboard} /> : <ChartCentre doc={doc} update={update} onAddData={() => setAdding(true)} />}
             </ErrorBoundary>
           </main>
         }
