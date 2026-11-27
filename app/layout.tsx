@@ -3,6 +3,7 @@ import { DM_Sans, Newsreader } from "next/font/google";
 import { SkipLink } from "@/components/layout/skip-link";
 import { Toaster } from "@/components/ui/sonner";
 import { THEME_INIT_SCRIPT } from "@/hooks/use-theme";
+import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, TAGLINE } from "@/lib/site";
 import "./globals.css";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display: "swap" });
@@ -10,10 +11,12 @@ const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display
 const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], weight: "500", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Vizora — See beyond information", template: "%s · Vizora" },
-  description:
-    "Vizora is a local-first universal visualisation platform. See beyond information.",
-  applicationName: "VIZORA",
+  metadataBase: getSiteUrl(),
+  title: { default: `${SITE_NAME} — ${TAGLINE}`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_GB" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

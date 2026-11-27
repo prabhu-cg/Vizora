@@ -64,7 +64,7 @@ describe("Butter tokens", () => {
 });
 
 describe("Token Only Rule", () => {
-  const exempt = new Set(["components/brand/logo.tsx", "app/global-error.tsx", "app/icon.svg"]);
+  const exempt = new Set(["components/brand/logo.tsx", "app/global-error.tsx", "app/icon.svg", "app/opengraph-image.tsx"]);
   function walk(dir: string): string[] {
     return readdirSync(dir).flatMap((name) => {
       const p = join(dir, name);

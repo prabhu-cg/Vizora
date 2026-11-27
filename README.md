@@ -22,6 +22,15 @@ Scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `test`, `test:watch`, `fo
 
 Notes: all user data lives in the visitor's browser (IndexedDB); the only server code is `/api/health`. Security headers are set in `next.config.ts`.
 
+## Marketing website (F1)
+Pages: `/`, `/features`, `/how-it-works`, `/use-cases`, `/pricing`, `/about`, `/faq`, `/privacy`, `/terms` (all static). Every claim lives in `lib/marketing/content.ts` with an availability status (`available` / `in-development` / `planned`); tests fail if an unbuilt feature is marked available, if Pro/Team show purchase controls, or if any link is dead.
+
+Environment (see `.env.example`):
+- `NEXT_PUBLIC_SITE_URL` — production origin for canonical URLs, sitemap, robots and social cards. Falls back to Vercel's URL, then `http://localhost:3000`. Set it on Vercel before launch.
+- `NEXT_PUBLIC_CONTACT_EMAIL` — optional; shown on Privacy/Terms only when set.
+
+SEO: per-page metadata, canonical, Open Graph/Twitter cards (`app/opengraph-image.tsx`), `sitemap.xml`, `robots.txt` (app and API excluded), JSON-LD (Organization/WebSite/SoftwareApplication, FAQPage). Illustrations are inline SVG, so pages ship no images and little JavaScript.
+
 ## Structure
 ```
 app/            (marketing)/ · app/(shell)/{dashboard,settings} · app/(workspace)/workspace · api/
