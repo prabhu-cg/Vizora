@@ -24,6 +24,7 @@ const storedSchema = z.object({
   id: z.string().min(1),
   projectId: z.string().min(1),
   revision: z.number().int().min(1),
+  order: z.number().finite().optional(),
   meta: metaSchema,
   document: z.unknown(),
 });
@@ -34,11 +35,13 @@ export function toStored(
   projectId: string,
   revision: number,
   document: VisualisationIR,
+  order?: number,
 ): StoredVisualisation {
   return {
     id: document.id,
     projectId,
     revision,
+    ...(order !== undefined ? { order } : {}),
     meta: {
       title: document.title,
       description: document.description,
@@ -71,5 +74,9 @@ export function summaryFromStored(raw: unknown): VisualisationSummary {
   const s = readStored(raw);
   const type = visualisationTypeSchema.safeParse(s.meta.type === "diagram" ? "flowchart" : s.meta.type);
   if (!type.success) throw new StorageError("A stored visualisation has an unknown type (corrupt record).");
-  return { id: s.id, projectId: s.projectId, revision: s.revision, ...s.meta, type: type.data };
+  return { id: s.id, projectId: s.projectId, revision: s.revision, ...(s.order !== undefined ? { order: s.order } : {}), ...s.meta, type: type.data };
+}
+
+export function orderOfStored(raw: unknown): number | undefined {
+  return readStored(raw).order;
 }

@@ -29,7 +29,7 @@ describe("DashboardView", () => {
     await userEvent.type(within(dialog).getByLabelText("Name"), "Quarterly review");
     await userEvent.click(within(dialog).getByRole("button", { name: "Create project" }));
 
-    expect(await screen.findByRole("link", { name: "Quarterly review" })).toHaveAttribute("href", expect.stringMatching(/^\/app\/dashboard\/.+/));
+    expect((await screen.findAllByRole("link", { name: "Quarterly review" }))[0]).toHaveAttribute("href", expect.stringMatching(/^\/app\/dashboard\/.+/));
     expect((await storage.projects.list()).map((p) => p.name)).toEqual(["Quarterly review"]);
   });
 
@@ -52,7 +52,7 @@ describe("DashboardView", () => {
     await storage.visualisations.create(p.id, createVisualisation({ title: "Child", type: "flowchart" }));
     renderWith(storage, <DashboardView />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Actions for Doomed" }));
+    await userEvent.click((await screen.findAllByRole("button", { name: "Actions for Doomed" }))[0]!);
     await userEvent.click(await screen.findByRole("menuitem", { name: /delete project/i }));
 
     // Cancel first: nothing is deleted.
@@ -63,7 +63,7 @@ describe("DashboardView", () => {
     expect(await storage.projects.get(p.id)).toBeDefined();
 
     // Confirm: deleted, cascade included.
-    await userEvent.click(screen.getByRole("button", { name: "Actions for Doomed" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Actions for Doomed" })[0]!);
     await userEvent.click(await screen.findByRole("menuitem", { name: /delete project/i }));
     confirm = await screen.findByRole("alertdialog");
     await userEvent.click(within(confirm).getByRole("button", { name: "Delete project" }));

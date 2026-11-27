@@ -42,8 +42,11 @@ export function ChartStage({ dataset, config, label, onAddData, onViewData }: { 
   }
   return (
     <div className="flex h-full min-h-96 flex-col">
-      <div className="min-h-0 flex-1 p-3">
-        <ChartView data={result.data} config={config} label={`${config.kind} chart: ${config.title || label}`} />
+      {/* The chart is centred in a bounded frame: it uses the room but never balloons on a big screen. */}
+      <div className="grid min-h-0 flex-1 place-items-center p-3 sm:p-5">
+        <div className="h-full max-h-[52rem] w-full max-w-[80rem]">
+          <ChartView data={result.data} config={config} label={`${config.kind} chart: ${config.title || label}`} />
+        </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-surface px-4 py-2 text-xs text-muted-foreground">
         <p aria-live="polite">

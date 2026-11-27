@@ -21,7 +21,7 @@ describe("backup export/import", () => {
     const target = createTestStorage();
     const report = await target.backup.import(parseBackupText(text), "skip");
     expect(report).toEqual({ projectsAdded: 1, projectsSkipped: 0, visualisationsAdded: 1, visualisationsSkipped: 0 });
-    expect(await target.projects.get(p.id)).toEqual(p);
+    expect(await target.projects.get(p.id)).toEqual(await s.projects.get(p.id)); // a project's updatedAt follows its contents
     expect((await target.visualisations.get(v.id))?.document).toEqual(v.document);
   });
 

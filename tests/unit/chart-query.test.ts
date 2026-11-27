@@ -209,7 +209,7 @@ describe("the table behind a chart", () => {
 describe("configuration", () => {
   it("fills defaults and validates", () => {
     const c = chartConfigSchema.parse({});
-    expect(c).toMatchObject({ kind: "bar", aggregation: "sum", legend: { show: true, position: "top" }, tooltips: true, dataLabels: false, filters: [], colors: {} });
+    expect(c).toMatchObject({ kind: "bar", aggregation: "sum", legend: { show: true, position: "bottom" }, tooltips: true, dataLabels: false, filters: [], colors: {} });
     expect(chartConfigSchema.safeParse({ colors: { A: "red" } }).success).toBe(false);
     expect(chartConfigSchema.safeParse({ colors: { A: "#aabbcc" } }).success).toBe(true);
     expect(chartConfigSchema.safeParse({ kind: "radar" }).success).toBe(false);

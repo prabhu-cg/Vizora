@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Copy, Download, Redo2, Repeat2, Undo2 } from "lucide-react";
+import { ArrowLeft, Copy, Download, Repeat2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
@@ -28,7 +28,6 @@ export function WorkspaceHeader({
   update,
   saveNow,
   onChangeType,
-  history,
 }: {
   document: VisualisationIR;
   projectId: string;
@@ -37,8 +36,6 @@ export function WorkspaceHeader({
   update: (updater: (d: VisualisationIR) => VisualisationIR, options?: UpdateOptions) => void;
   saveNow: () => Promise<void>;
   onChangeType: (target: EngineType) => void;
-  /** Shown here only for types without the editing toolbar (charts). */
-  history?: { undo: () => void; redo: () => void; canUndo: boolean; canRedo: boolean };
 }) {
   const storage = useRequiredStorage();
   const router = useRouter();
@@ -108,16 +105,6 @@ export function WorkspaceHeader({
       <SaveStatus state={save} />
 
       <div className="flex flex-wrap items-center gap-2">
-        {history && (
-          <>
-            <Button variant="ghost" size="icon" className="size-9" aria-label="Undo" title="Undo (Ctrl/⌘ + Z)" disabled={!history.canUndo} onClick={history.undo}>
-              <Undo2 aria-hidden="true" />
-            </Button>
-            <Button variant="ghost" size="icon" className="size-9" aria-label="Redo" title="Redo (Ctrl/⌘ + Shift + Z)" disabled={!history.canRedo} onClick={history.redo}>
-              <Redo2 aria-hidden="true" />
-            </Button>
-          </>
-        )}
         {isEngineType(doc.type) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

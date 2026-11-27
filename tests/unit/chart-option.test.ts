@@ -135,3 +135,19 @@ describe("SVG export of every chart kind", () => {
     expect(() => renderChartSvg(D, cfg({ kind: "bar" }))).toThrow(/Choose a column for the X axis/);
   });
 });
+
+describe("legend", () => {
+  it("shows every entry at the bottom, as a plain wrapping legend, never a scrolling carousel", () => {
+    for (const key of ["pie", "donut", "stacked-bar", "scatter", "multi-line"]) {
+      const o = opt(FIXTURES[key]!);
+      const legend = [o.legend].flat().filter(Boolean)[0];
+      if (!legend?.show) continue;
+      expect(legend.type, key).toBe("plain");
+      expect(legend.bottom, key).toBe(0);
+    }
+  });
+  it("leaves room for the legend rows so entries never overlap the chart", () => {
+    const o = opt({ kind: "bar", ...BASE });
+    expect(o.grid.bottom).toBeGreaterThanOrEqual(38);
+  });
+});

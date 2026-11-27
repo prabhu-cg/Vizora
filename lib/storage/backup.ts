@@ -5,12 +5,12 @@ import type { BackupEnvelope } from "@/types/data";
 import type { Project } from "@/types/project";
 import type { VisualisationIR } from "@/types/visualisation";
 import { BackupError } from "./errors";
-import { fromStored } from "./records";
+import { fromStored, orderOfStored } from "./records";
 
 export interface ParsedBackup {
   exportedAt: string;
   projects: Project[];
-  visualisations: { id: string; projectId: string; document: VisualisationIR }[];
+  visualisations: { id: string; projectId: string; document: VisualisationIR; order?: number }[];
 }
 
 export function buildBackup(rawProjects: unknown[], rawVisualisations: unknown[]): BackupEnvelope {
@@ -23,7 +23,8 @@ export function buildBackup(rawProjects: unknown[], rawVisualisations: unknown[]
       projects: rawProjects.map(parseProject),
       visualisations: rawVisualisations.map((raw) => {
         const record = fromStored(raw);
-        return { id: record.id, projectId: record.projectId, document: record.document };
+        const order = orderOfStored(raw);
+        return { id: record.id, projectId: record.projectId, document: record.document, ...(order !== undefined ? { order } : {}) };
       }),
     };
   } catch (cause) {
@@ -63,7 +64,7 @@ export function readBackup(raw: unknown): ParsedBackup {
       if (!projectIds.has(item.projectId)) {
         throw new BackupError(`Visualisation "${document.title}" belongs to a project that is not in the backup.`);
       }
-      return { id: item.id, projectId: item.projectId, document };
+      return { id: item.id, projectId: item.projectId, document, ...(item.order !== undefined ? { order: item.order } : {}) };
     });
     return { exportedAt: envelope.data.exportedAt, projects, visualisations };
   } catch (cause) {

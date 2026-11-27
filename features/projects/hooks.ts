@@ -36,3 +36,8 @@ export function useRecentVisualisations(limit = 6) {
   );
   return useStorageQuery(query, anyVisualisationChange);
 }
+
+export function useAllVisualisations() {
+  const query = useCallback((s: VizoraStorage) => s.visualisations.listAll(), []);
+  return useStorageQuery(query, anyVisualisationChange);
+}

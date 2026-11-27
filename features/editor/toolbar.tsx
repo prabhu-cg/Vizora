@@ -9,6 +9,8 @@ import { Select } from "@/components/ui/input";
 import { canDelete, NODE_KINDS, resetLayout, setAllCollapsed, setLayout } from "@/lib/engine";
 import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import type { VisualisationIR } from "@/types/visualisation";
+import { PanelControls } from "@/components/workspace/workspace-frame";
+import type { Chrome } from "@/components/workspace/use-workspace-chrome";
 import type { EditorSession } from "./use-editor-session";
 
 type Update = (updater: (d: VisualisationIR) => VisualisationIR, options?: UpdateOptions) => void;
@@ -40,7 +42,9 @@ export function EditorToolbar({
   canUndo,
   canRedo,
   onHelp,
+  chrome,
 }: {
+  chrome?: Chrome;
   doc: VisualisationIR;
   session: EditorSession;
   update: Update;
@@ -165,6 +169,7 @@ export function EditorToolbar({
         <IconButton label="Fit to screen (Ctrl/⌘ + 0)" onClick={() => void rf.fitView({ padding: 0.2, maxZoom: 1.1 })}>
           <Maximize2 aria-hidden="true" />
         </IconButton>
+        {chrome && <PanelControls chrome={chrome} left="Source" right="Inspector" />}
         <IconButton label="Keyboard shortcuts (?)" onClick={onHelp}>
           <Keyboard aria-hidden="true" />
         </IconButton>

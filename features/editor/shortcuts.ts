@@ -1,6 +1,6 @@
 /** Keyboard shortcuts for the editor, as data so the help dialog and the handler can never disagree. */
 export type ShortcutAction =
-  | "undo" | "redo" | "duplicate" | "delete" | "edit" | "add-child" | "add-sibling" | "fit" | "zoom-in" | "zoom-out" | "deselect" | "help" | "select-all";
+  | "undo" | "redo" | "duplicate" | "delete" | "edit" | "add-child" | "add-sibling" | "fit" | "zoom-in" | "zoom-out" | "deselect" | "help" | "select-all" | "toggle-left" | "toggle-right" | "focus";
 
 export interface ShortcutDef {
   action: ShortcutAction;
@@ -21,6 +21,9 @@ export const SHORTCUTS: ShortcutDef[] = [
   { action: "zoom-in", keys: "+", label: "Zoom in" },
   { action: "zoom-out", keys: "−", label: "Zoom out" },
   { action: "deselect", keys: "Escape", label: "Cancel editing / clear selection" },
+  { action: "toggle-left", keys: "[", label: "Show or hide the left panel" },
+  { action: "toggle-right", keys: "]", label: "Show or hide the right panel" },
+  { action: "focus", keys: "F", label: "Full-screen canvas: hide everything but the work (press F or Escape to leave)" },
   { action: "help", keys: "?", label: "Show this list" },
 ];
 
@@ -63,6 +66,12 @@ export function matchShortcut(e: KeyLike): ShortcutAction | undefined {
     case "-":
     case "_":
       return "zoom-out";
+    case "[":
+      return "toggle-left";
+    case "]":
+      return "toggle-right";
+    case "f":
+      return "focus";
     case "?":
       return "help";
     default:
@@ -83,6 +92,8 @@ export function shouldHandle(action: ShortcutAction, target: EventTarget | null,
   if (doc.querySelector('[role="dialog"], [role="alertdialog"]')) return false;
   const inCanvas = !!el?.closest("[data-editor-canvas]");
   const onBody = !el || el === doc.body;
+  // Panel and focus toggles work from anywhere that is not a text field or dialog.
+  if (action === "toggle-left" || action === "toggle-right" || action === "focus") return true;
   if (action === "undo" || action === "redo" || action === "help" || action === "fit") return inCanvas || onBody;
   if (action === "add-child" || action === "edit" || action === "delete" || action === "add-sibling" || action === "duplicate" || action === "select-all") return inCanvas || (onBody && action !== "add-child");
   return inCanvas || onBody;

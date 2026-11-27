@@ -20,3 +20,10 @@ export function parseBackupText(text: string): unknown {
     throw new BackupError("This file is not valid JSON, so it cannot be a VIZORA backup.");
   }
 }
+
+/** vizora-project-my-plan-2026-11-27-13-05-09.json */
+export function projectBackupFilename(name: string, now: Date = new Date()): string {
+  const slug = name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "project";
+  const stamp = now.toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  return `vizora-project-${slug}-${stamp}.json`;
+}

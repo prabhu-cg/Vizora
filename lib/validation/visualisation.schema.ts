@@ -6,7 +6,19 @@ export const CURRENT_VISUALISATION_SCHEMA_VERSION = 3;
 const isoDate = z.iso.datetime();
 const id = z.string().min(1).max(128);
 const finite = z.number().finite();
-export const jsonRecordSchema = z.record(z.string(), z.json());
+/**
+ * JSON has no `undefined`, but editors naturally write `{ series: undefined }`
+ * to clear a setting. Drop those keys (exactly what JSON.stringify does) before
+ * validating, so clearing a setting can never make a document unsaveable.
+ */
+export function dropUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(dropUndefined);
+  if (value && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
+    return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined).map(([k, v]) => [k, dropUndefined(v)]));
+  }
+  return value;
+}
+export const jsonRecordSchema = z.preprocess(dropUndefined, z.record(z.string(), z.json())) as unknown as z.ZodType<Record<string, z.infer<ReturnType<typeof z.json>>>>;
 
 export const VISUALISATION_TYPES = [
   "flowchart",

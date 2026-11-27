@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
@@ -12,6 +13,17 @@ export function Textarea({ className, ...props }: React.ComponentProps<"textarea
   return <textarea data-slot="textarea" className={cn(field, "min-h-20 py-2", className)} {...props} />;
 }
 
+/**
+ * A native <select> (so keyboard, screen reader and mobile pickers all work) with
+ * the browser's cramped arrow replaced by an inset chevron. A caller's `w-auto`
+ * makes the control shrink to its content, for toolbars.
+ */
 export function Select({ className, ...props }: React.ComponentProps<"select">) {
-  return <select data-slot="select" className={cn(field, "h-10 pr-8", className)} {...props} />;
+  const fitContent = /(^|\s)w-auto(\s|$)/.test(className ?? "");
+  return (
+    <span className={cn("relative", fitContent ? "inline-block" : "block")}>
+      <select data-slot="select" className={cn(field, "h-10 cursor-pointer appearance-none pr-10 [&_option]:bg-popover [&_option]:text-foreground", className)} {...props} />
+      <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    </span>
+  );
 }

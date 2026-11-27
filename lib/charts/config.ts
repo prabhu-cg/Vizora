@@ -59,7 +59,7 @@ export const chartConfigSchema = z.object({
   subtitle: z.string().max(300).default(""),
   xLabel: z.string().max(100).optional(),
   yLabel: z.string().max(100).optional(),
-  legend: z.object({ show: z.boolean().default(true), position: z.enum(["top", "bottom", "left", "right"]).default("top") }).default({ show: true, position: "top" }),
+  legend: z.object({ show: z.boolean().default(true), position: z.enum(["top", "bottom", "left", "right"]).default("bottom") }).default({ show: true, position: "bottom" }),
   dataLabels: z.boolean().default(false),
   tooltips: z.boolean().default(true),
   sort: z.object({ by: z.enum(["none", "value", "label"]).default("none"), dir: z.enum(["asc", "desc"]).default("desc") }).default({ by: "none", dir: "desc" }),

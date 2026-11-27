@@ -42,7 +42,7 @@ export function DataPanel({ document: doc, onChange, addOpen, onAddOpenChange }:
   };
 
   return (
-    <section aria-labelledby={`${id}-h`} className="grid gap-4 p-4">
+    <section aria-labelledby={`${id}-h`} className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4">
       <div>
         <h3 id={`${id}-h`} className="text-[15px] font-semibold">Data</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">Read in your browser and never uploaded. Your original files are never changed.</p>
@@ -60,25 +60,25 @@ export function DataPanel({ document: doc, onChange, addOpen, onAddOpenChange }:
           No data yet. Upload a CSV, JSON or Excel file, paste from a spreadsheet, or type it in.
         </p>
       ) : (
-        <ul className="grid gap-2">
+        <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
           {doc.data.datasets.map((ds) => {
             const editable = ds.origin === "manual" && ds.rows.length <= EDITABLE_LIMIT.rows && ds.columns.length <= EDITABLE_LIMIT.columns;
             return (
-              <li key={ds.id} className="rounded-input border border-border p-3">
+              <li key={ds.id} className="min-w-0 rounded-input border border-border p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium" title={ds.name}>{ds.name}</p>
                     <p className="text-xs text-muted-foreground">{ds.rows.length.toLocaleString()} rows · {ds.columns.length} columns</p>
                   </div>
-                  <Badge variant="secondary">{ORIGIN[ds.origin ?? "import"]}</Badge>
+                  <Badge variant="secondary" className="shrink-0">{ORIGIN[ds.origin ?? "import"]}</Badge>
                 </div>
                 <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`Columns in ${ds.name}`}>
                   {ds.columns.slice(0, 8).map((c) => (
-                    <li key={c.key} className="rounded bg-muted px-1.5 py-0.5 text-xs text-body">{c.label} <span className="text-muted-foreground">· {c.type}</span></li>
+                    <li key={c.key} className="max-w-full truncate rounded bg-muted px-1.5 py-0.5 text-xs text-body" title={`${c.label} (${c.type})`}>{c.label} <span className="text-muted-foreground">· {c.type}</span></li>
                   ))}
                   {ds.columns.length > 8 && <li className="px-1 text-xs text-muted-foreground">+{ds.columns.length - 8} more</li>}
                 </ul>
-                <div className="mt-2 flex flex-wrap gap-1">
+                <div className="-mx-1 mt-2 flex flex-wrap gap-0.5">
                   <Button variant="ghost" size="sm" onClick={() => setInspecting(ds)} aria-label={`Inspect ${ds.name}`}><Eye aria-hidden="true" /> Inspect</Button>
                   {editable && <Button variant="ghost" size="sm" onClick={() => setEditing(ds)} aria-label={`Edit ${ds.name}`}><Pencil aria-hidden="true" /> Edit</Button>}
                   <Button variant="ghost" size="sm" onClick={() => download(ds)} aria-label={`Download ${ds.name} as CSV`}><Download aria-hidden="true" /> CSV</Button>

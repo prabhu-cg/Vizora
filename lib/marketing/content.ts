@@ -154,9 +154,9 @@ export const WORKSPACE_FEATURES: Capability[] = [
       "A one-page PDF of a whole dashboard",
       "CSV of the data behind a chart, or of the dataset itself",
       "Editable Vizora JSON, a lossless copy of the visualisation",
-      "A backup of every project in one file; restoring never overwrites existing work",
+      "A backup of everything, or of one project, in one file; restoring checks the file first and never overwrites existing work",
     ],
-    next: ["PDF for single charts and diagrams", "Importing a single exported visualisation"],
+    next: ["PDF for single charts and diagrams", "Importing a single exported visualisation file"],
   },
 ];
 

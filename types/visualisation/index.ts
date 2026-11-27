@@ -44,6 +44,8 @@ export interface VisualisationSummary {
   type: VisualisationType;
   nodeCount: number;
   datasetCount: number;
+  /** Position within its project when the user has arranged them; absent on older records. */
+  order?: number;
   createdAt: string;
   updatedAt: string;
 }

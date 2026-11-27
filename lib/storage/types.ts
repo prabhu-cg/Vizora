@@ -1,4 +1,4 @@
-import type { BackupEnvelope, BackupPreview, ConflictPolicy, ImportReport } from "@/types/data";
+import type { BackupEnvelope, BackupPreview, ConflictPolicy, ImportReport, StorageStats } from "@/types/data";
 import type { Project, ProjectInput } from "@/types/project";
 import type {
   VisualisationIR,
@@ -18,6 +18,8 @@ export interface VizoraStorage {
     get(id: string): Promise<Project | undefined>;
     create(input: ProjectInput): Promise<Project>;
     update(id: string, patch: Partial<ProjectInput>): Promise<Project>;
+    /** Copies a project and all of its visualisations (new ids, same order) in one atomic step. */
+    duplicate(id: string): Promise<{ project: Project; visualisations: number }>;
     /** Deletes the project and all of its visualisations atomically. Callers must confirm with the user first. */
     delete(id: string): Promise<{ deletedVisualisations: number }>;
   };
@@ -36,14 +38,30 @@ export interface VizoraStorage {
       document: VisualisationIR,
       options: { expectedRevision: number; overwrite?: boolean },
     ): Promise<VisualisationRecord>;
+    /** Copies a visualisation into the same project, directly after the original. */
     duplicate(id: string): Promise<VisualisationRecord>;
+    /** Moves a visualisation to the end of another project. Its content and revision are untouched. */
+    move(id: string, projectId: string): Promise<VisualisationRecord>;
+    /**
+     * Sets the order of every visualisation in a project. `ids` must be exactly the
+     * project's current visualisations; if the list changed meanwhile this fails
+     * instead of guessing, so nothing is silently dropped or reordered wrongly.
+     */
+    reorder(projectId: string, ids: string[]): Promise<void>;
     delete(id: string): Promise<void>;
   };
   backup: {
     export(): Promise<BackupEnvelope>;
+    /** A backup containing just one project and its visualisations, in the same importable format. */
+    exportProject(projectId: string): Promise<BackupEnvelope>;
     /** Validates and summarises a backup without writing anything. */
     preview(raw: unknown): Promise<BackupPreview>;
     import(raw: unknown, policy: ConflictPolicy): Promise<ImportReport>;
+  };
+  data: {
+    stats(): Promise<StorageStats>;
+    /** Deletes every project and visualisation. Callers must get explicit confirmation first. */
+    clearAll(): Promise<void>;
   };
   subscribe(listener: ChangeListener): () => void;
   close(): void;

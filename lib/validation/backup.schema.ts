@@ -19,6 +19,8 @@ export const backupEnvelopeSchema = z.strictObject({
       id: z.string().min(1).max(128),
       projectId: z.string().min(1).max(128),
       document: z.unknown(),
+      /** Position within the project, so a restore keeps your arrangement. */
+      order: z.number().finite().optional(),
     }),
   ),
 });

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import DataWorkspace from "@/components/workspace/data-workspace";
+import { useWorkspaceChrome } from "@/components/workspace/use-workspace-chrome";
 import { DataTable } from "@/features/data/data-table";
 import { ImportDataDrawer } from "@/features/data/import-drawer";
 import { readChartConfig, readDashboard } from "@/lib/charts";
@@ -189,7 +190,8 @@ function Workspace({ initial, onDoc }: { initial: VisualisationIR; onDoc: (d: Vi
   useEffect(() => {
     onDoc(doc);
   }, [doc, onDoc]);
-  return <DataWorkspace doc={doc} update={update} undo={() => undefined} redo={() => undefined} loadKey={0} />;
+  const chrome = useWorkspaceChrome();
+  return <DataWorkspace doc={doc} update={update} undo={() => undefined} redo={() => undefined} canUndo={false} canRedo={false} loadKey={0} chrome={chrome} />;
 }
 
 const SALES = "Month,Revenue,Costs\n2026-01-01,100,60\n2026-02-01,120,70\n2026-03-01,90,65";
@@ -444,7 +446,11 @@ describe("dashboard workspace", () => {
   it("undo/redo shortcuts reach the workspace, but never while typing", async () => {
     const undo = vi.fn();
     const redo = vi.fn();
-    render(<DataWorkspace doc={createVisualisation({ title: "Board", type: "dashboard" })} update={() => undefined} undo={undo} redo={redo} loadKey={0} />);
+    function Shortcuts() {
+      const chrome = useWorkspaceChrome();
+      return <DataWorkspace doc={createVisualisation({ title: "Board", type: "dashboard" })} update={() => undefined} undo={undo} redo={redo} canUndo={false} canRedo={false} loadKey={0} chrome={chrome} />;
+    }
+    render(<Shortcuts />);
     await userEvent.keyboard("{Control>}z{/Control}");
     expect(undo).toHaveBeenCalledTimes(1);
     await userEvent.keyboard("{Control>}{Shift>}z{/Shift}{/Control}");

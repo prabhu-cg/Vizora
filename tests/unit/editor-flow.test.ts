@@ -89,6 +89,10 @@ describe("keyboard shortcuts", () => {
     expect(matchShortcut(key("+"))).toBe("zoom-in");
     expect(matchShortcut(key("-"))).toBe("zoom-out");
     expect(matchShortcut(key("?", { shiftKey: true }))).toBe("help");
+    expect(matchShortcut(key("["))).toBe("toggle-left");
+    expect(matchShortcut(key("]"))).toBe("toggle-right");
+    expect(matchShortcut(key("f"))).toBe("focus");
+    expect(matchShortcut(key("f", { ctrlKey: true }))).toBeUndefined(); // never steals browser find
   });
   it("leaves unrelated and browser-reserved combinations alone", () => {
     expect(matchShortcut(key("Tab", { shiftKey: true }))).toBeUndefined(); // reverse focus travel
@@ -99,7 +103,7 @@ describe("keyboard shortcuts", () => {
   it("every documented shortcut action is reachable", () => {
     const reachable = new Set(
       [key("z", { ctrlKey: true }), key("Z", { ctrlKey: true, shiftKey: true }), key("d", { ctrlKey: true }), key("Delete"), key("Enter"), key("Tab"), key("Enter", { altKey: true }),
-        key("a", { ctrlKey: true }), key("0", { ctrlKey: true }), key("+"), key("-"), key("Escape"), key("?")].map(matchShortcut),
+        key("a", { ctrlKey: true }), key("0", { ctrlKey: true }), key("+"), key("-"), key("Escape"), key("?"), key("["), key("]"), key("f")].map(matchShortcut),
     );
     for (const s of SHORTCUTS) expect(reachable.has(s.action), s.action).toBe(true);
   });
@@ -116,6 +120,12 @@ describe("keyboard shortcuts", () => {
     it("never while a dialog is open", () => {
       const d = host('<div role="alertdialog"></div><div data-editor-canvas><button id="b"></button></div>');
       expect(shouldHandle("delete", d.getElementById("b"), d)).toBe(false);
+    });
+    it("panel and full-screen toggles work from anywhere except text fields and dialogs", () => {
+      const d = host('<button id="outside">x</button><input id="field"/>');
+      expect(shouldHandle("toggle-left", d.getElementById("outside"), d)).toBe(true);
+      expect(shouldHandle("focus", d.body, d)).toBe(true);
+      expect(shouldHandle("focus", d.getElementById("field"), d)).toBe(false);
     });
     it("in the canvas yes; Tab elsewhere on the page must keep moving focus", () => {
       const d = host('<button id="outside">x</button><div data-editor-canvas><div class="react-flow__node" id="n" tabindex="0"></div></div>');
