@@ -7,7 +7,7 @@ import { useId, useState } from "react";
 import { Spinner } from "@/components/shared/loading-state";
 import { SaveStatus } from "@/components/shared/save-status";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { TYPE_META } from "@/components/visualisations/type-meta";
 import { useEntitlements } from "@/features/entitlements/client";
@@ -15,7 +15,7 @@ import type { AutosaveState } from "@/features/visualisation/autosave";
 import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import { useRequiredStorage } from "@/hooks/use-storage";
 import { ENGINE_TYPES, isEngineType, type EngineType } from "@/lib/engine";
-import { downloadBlob } from "@/lib/export";
+import { copyEmbedCode, downloadBlob } from "@/lib/export";
 import { errorMessage, notify } from "@/lib/notify";
 import { exportManager } from "@/services";
 import type { VisualisationIR } from "@/types/visualisation";
@@ -63,6 +63,18 @@ export function WorkspaceHeader({
       notify.error("Could not duplicate", errorMessage(error));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const copyEmbed = async () => {
+    setExporting(true);
+    try {
+      if (await copyEmbedCode(doc)) notify.success("Embed code copied", "Paste it into any web page. It is a static picture and will not update.");
+      else notify.error("Could not copy", "Your browser blocked clipboard access. Use Export, then HTML embed page, instead.");
+    } catch (error) {
+      notify.error("Embed failed", errorMessage(error));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -148,6 +160,17 @@ export function WorkspaceHeader({
                   </span>
                 </DropdownMenuItem>
               ))}
+              {exporters.some((e) => e.id === "html-embed") && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => void copyEmbed()}>
+                    <span className="grid">
+                      <span className="font-medium">Copy embed code</span>
+                      <span className="text-xs text-muted-foreground">HTML to paste into any page. Static; does not update.</span>
+                    </span>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

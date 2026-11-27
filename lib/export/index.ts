@@ -8,3 +8,4 @@ export { svgToPng } from "./png";
 export { slugify } from "./slug";
 export * from "./data-exporters";
 export { svgToPdf, createPdfExporter } from "./pdf";
+export * from "./embed";

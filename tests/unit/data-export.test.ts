@@ -127,8 +127,8 @@ describe("dashboard export", () => {
 describe("what each document type can export", () => {
   const m = createExportManager(createEntitlementService());
   const ids = (d: VisualisationIR) => m.available(d).map((e) => e.id);
-  it("chart", () => expect(ids(chartDoc())).toEqual(["png", "svg", "csv-chart", "csv-dataset", "vizora-json"]));
-  it("dashboard", () => expect(ids(dashDoc(MANY))).toEqual(["png", "svg", "pdf", "csv-dataset", "vizora-json"]));
+  it("chart", () => expect(ids(chartDoc())).toEqual(["png", "svg", "html-embed", "csv-chart", "csv-dataset", "vizora-json"]));
+  it("dashboard", () => expect(ids(dashDoc(MANY))).toEqual(["png", "svg", "html-embed", "pdf", "csv-dataset", "vizora-json"]));
   it("an empty chart or dashboard can still be saved as JSON, and nothing else", () => {
     expect(ids(createVisualisation({ title: "c", type: "chart" }))).toEqual(["vizora-json"]);
     expect(ids(createVisualisation({ title: "d", type: "dashboard" }))).toEqual(["vizora-json"]);

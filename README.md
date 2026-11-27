@@ -61,6 +61,9 @@ hooks/ services/ tests/ docs/
 ## Accessibility notes
 Text colours, ochre-on-tint, semantic colours and form-control borders (3:1) are contrast-tested in both themes (`tests/unit/design-tokens.test.ts`). Amber is only ever a fill with charcoal text. Focus is a solid 2px ochre outline.
 
+## Embedding
+Export menu: **Copy embed code** (an inline-SVG `<figure>` with unique ids, fluid width, escaped caption, no scripts or external requests) and **HTML embed page**. These are static snapshots: they do not update and there is no hosted, interactive embed (that would require publishing a copy to a server).
+
 ## Known gaps (honest status)
 - Reordering uses up/down buttons, not drag and drop. Storage size is estimated from saved records, not measured by the browser. Full-screen uses the browser Fullscreen API where available and falls back to hiding the panels.
 - Visual verification in a real browser was **not performed** (browser tooling unavailable); UI behaviour is covered by jsdom tests and a production build only. Please click through once: create project → diagram → add nodes → refresh → import CSV chart → export/import backup.

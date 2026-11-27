@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils/cn";
 
 export const metadata = pageMetadata({
   title: "Features",
-  description: "What Vizora can do today: diagrams, 13 chart types, dashboards, Excel/CSV/JSON import, editing, autosave and PNG, SVG, CSV, PDF and JSON export. AI is planned.",
+  description: "What Vizora does today: diagrams, 13 chart types, dashboards, data import, projects with backup, and PNG, SVG, PDF, JSON and embed export. AI is planned.",
   path: MARKETING_ROUTES.features.path,
 });
 
 const byId = (list: Capability[], id: string) => list.find((c) => c.id === id)!;
 
-// Order follows the product story: generate, draw, map, plan, chart, combine, refine, export.
+// Order follows the product story: generate, draw, map, plan, chart, combine, refine, organise, export.
 const SECTIONS: { cap: Capability; heading?: string }[] = [
   { cap: byId(WORKSPACE_FEATURES, "generation") },
   { cap: byId(CAPABILITIES, "diagrams") },
@@ -24,6 +24,7 @@ const SECTIONS: { cap: Capability; heading?: string }[] = [
   { cap: byId(CAPABILITIES, "charts") },
   { cap: byId(CAPABILITIES, "dashboards"), heading: "Dashboard creation" },
   { cap: byId(WORKSPACE_FEATURES, "editing") },
+  { cap: byId(WORKSPACE_FEATURES, "projects") },
   { cap: byId(WORKSPACE_FEATURES, "exporting") },
 ];
 

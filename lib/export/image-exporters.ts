@@ -7,7 +7,7 @@ import { slugify } from "./slug";
 import { renderDiagramSvg, type SvgResult } from "./svg";
 import type { Exporter } from "./types";
 
-const drawable = (d: VisualisationIR) => isEngineType(d.type) || (d.type === "chart" && d.data.datasets.length > 0) || (d.type === "dashboard" && readDashboard(d.configuration.options).widgets.length > 0);
+export const drawable = (d: VisualisationIR) => isEngineType(d.type) || (d.type === "chart" && d.data.datasets.length > 0) || (d.type === "dashboard" && readDashboard(d.configuration.options).widgets.length > 0);
 
 /** Chart rendering pulls in ECharts, so it is loaded only when a chart is actually exported. */
 export async function renderSvgFor(doc: VisualisationIR): Promise<SvgResult> {

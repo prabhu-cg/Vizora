@@ -162,9 +162,9 @@ describe("PNG export", () => {
 });
 
 describe("export manager", () => {
-  it("offers PNG, SVG and JSON for drawable types, and only JSON for tables", () => {
+  it("offers PNG, SVG, HTML embed and JSON for drawable types, and only JSON for tables", () => {
     const m = createExportManager(createEntitlementService());
-    expect(m.available(make(SAMPLES.timeline, "timeline")).map((e) => e.id)).toEqual(["png", "svg", "vizora-json"]);
+    expect(m.available(make(SAMPLES.timeline, "timeline")).map((e) => e.id)).toEqual(["png", "svg", "html-embed", "vizora-json"]);
     expect(m.available(createVisualisation({ title: "T", type: "table" })).map((e) => e.id)).toEqual(["vizora-json"]);
     expect(m.available(make(SAMPLES.timeline, "timeline")).map((e) => e.id)).not.toContain("pdf"); // PDF is for dashboards
     expect(pngExporter.supports!(createVisualisation({ title: "T", type: "chart" }))).toBe(false); // nothing to draw until data is added

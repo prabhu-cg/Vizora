@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useRequiredStorage } from "@/hooks/use-storage";
-import { downloadBlob, type Exporter } from "@/lib/export";
+import { copyEmbedCode, downloadBlob, type Exporter } from "@/lib/export";
 import { errorMessage, notify } from "@/lib/notify";
 import { exportManager } from "@/services";
 import type { VisualisationIR } from "@/types/visualisation";
@@ -49,6 +49,20 @@ export function ExportMenuItems({ visualisationId }: { visualisationId: string }
           Export as {e.label}
         </DropdownMenuItem>
       ))}
+      {state.exporters.some((e) => e.id === "html-embed") && (
+        <DropdownMenuItem
+          onSelect={async () => {
+            try {
+              if (await copyEmbedCode(doc)) notify.success("Embed code copied", "Paste it into any web page. It is a static picture and will not update.");
+              else notify.error("Could not copy", "Your browser blocked clipboard access. Use “Export as HTML embed page” instead.");
+            } catch (err) {
+              notify.error("Embed failed", errorMessage(err));
+            }
+          }}
+        >
+          Copy embed code
+        </DropdownMenuItem>
+      )}
     </>
   );
 }

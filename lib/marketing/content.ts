@@ -145,6 +145,21 @@ export const WORKSPACE_FEATURES: Capability[] = [
     next: ["Themes and further styling controls"],
   },
   {
+    id: "projects",
+    title: "Projects and your library",
+    status: "available",
+    summary: "Keep related visualisations together, find them again, and look after your data.",
+    today: [
+      "A dashboard of recent projects and recent visualisations, with search across both and sorting",
+      "Projects hold many visualisations: rename, duplicate, reorder, move between projects and delete with confirmation",
+      "Panels collapse and the canvas goes full screen, with keyboard shortcuts for both",
+      "Download a backup of everything or of one project, and restore it later; the file is checked and previewed first, and nothing is overwritten",
+      "A storage panel shows how much space your work uses and lets you clear it, after a typed confirmation",
+      "Your work is stored only in this browser and Vizora keeps no other copy, so download a backup to keep one",
+    ],
+    next: ["Dragging to reorder (today you use up and down buttons)", "Syncing between devices"],
+  },
+  {
     id: "exporting",
     title: "Exporting",
     status: "available",
@@ -154,9 +169,10 @@ export const WORKSPACE_FEATURES: Capability[] = [
       "A one-page PDF of a whole dashboard",
       "CSV of the data behind a chart, or of the dataset itself",
       "Editable Vizora JSON, a lossless copy of the visualisation",
+      "Copy embed code or an HTML page with the picture inline, to paste into any web page (a static snapshot that does not update)",
       "A backup of everything, or of one project, in one file; restoring checks the file first and never overwrites existing work",
     ],
-    next: ["PDF for single charts and diagrams", "Importing a single exported visualisation file"],
+    next: ["Live, interactive embeds that update (these would need you to publish a copy, so they will be opt-in)", "PDF for single charts and diagrams", "Importing a single exported visualisation file"],
   },
 ];
 
@@ -255,8 +271,8 @@ export const FREE_PROMISES = [
   { title: "No subscription required", body: "The Free edition is free, with no trial clock and no card." },
   { title: "No AI key required", body: "Nothing in Vizora needs an AI service or API key." },
   { title: "Local-first storage", body: "Projects live in your browser on your device, not on our servers." },
-  { title: "Useful from the start", body: "Flowcharts, mind maps, concept maps, timelines, thirteen chart types and dashboards, with undo, autosave, Excel, CSV and JSON import, and backup." },
-  { title: "Export your work", body: "PNG, SVG, CSV and PDF, editable JSON per visualisation, and one-file backups." },
+  { title: "Useful from the start", body: "Flowcharts, mind maps, concept maps, timelines, thirteen chart types and dashboards, with undo, autosave, Excel, CSV and JSON import, projects, and backup and restore." },
+  { title: "Export your work", body: "PNG, SVG, CSV and PDF, editable JSON per visualisation, static embed code for any web page, and one-file backups." },
 ];
 
 export interface PlanItem {
@@ -341,7 +357,7 @@ export const FAQS: Faq[] = [
   { q: "How well does it understand my text?", a: "It understands visible structure: numbered or bulleted steps, “if … otherwise …”, outlines, dates and statements like “A depends on B”. It does not understand arbitrary prose. When something is ambiguous or cannot be read, it tells you and leaves it for you to fix; it never invents steps, dates or relationships. A bare request such as “create a flowchart for onboarding” produces an empty flowchart, because there is nothing to structure." },
   { q: "Can I upload data?", a: "Yes. You can import CSV, TSV, JSON and Excel (.xlsx) files, paste data copied from a spreadsheet, or type it in. Files are read in your browser and are not uploaded anywhere, and your original file is never changed. Files up to 25 MB are accepted, older .xls files are not, and Vizora tells you clearly if a file cannot be read." },
   { q: "Where are my projects stored?", a: "In your browser, using IndexedDB on your own device. They are not stored on Vizora's servers. Clearing your browser's site data can remove them, so download a backup from Settings regularly." },
-  { q: "Can I export my visualisations?", a: "Yes. Export a PNG or SVG image that keeps your colours, shapes and labels, the data behind a chart as CSV, a whole dashboard as a one-page PDF, an editable Vizora JSON file, or a backup of everything." },
+  { q: "Can I export my visualisations?", a: "Yes. Export a PNG or SVG image that keeps your colours, shapes and labels, the data behind a chart as CSV, a whole dashboard as a one-page PDF, an editable Vizora JSON file, or a backup of everything. You can also copy embed code to paste a static picture into any web page; it does not update when you change the visualisation." },
   { q: "Is my data sent to external services?", a: "Your projects, pasted text and imported files are not sent anywhere; they stay in your browser. The website is delivered by a hosting provider that sees standard request information, as any website does. The Privacy policy explains this in detail." },
   { q: "Will Vizora support AI?", a: "AI-assisted generation is planned for the Pro edition. It is not available today, and the Free edition will keep working without any AI service." },
   { q: "What is included in Pro?", a: "Pro is planned, with an indicative price of £9 per month. The intended features are AI-assisted generation, advanced visualisations, document intelligence, cloud synchronisation, advanced exports and higher usage limits. None of these are available yet, and details and prices may change." },
