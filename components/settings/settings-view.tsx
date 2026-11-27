@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader } from "@/components/ui/drawer";
 import { FEATURE_CATALOGUE, PLAN_LABELS, useEntitlements } from "@/features/entitlements/client";
 import { useRequiredStorage } from "@/hooks/use-storage";
 import { backupFilename, parseBackupText, serializeBackup } from "@/lib/storage";
@@ -38,7 +38,7 @@ function PlanSection() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          Plan <Badge variant="blue">{PLAN_LABELS[plan]}</Badge>
+          Plan <Badge variant="soft">{PLAN_LABELS[plan]}</Badge>
         </CardTitle>
         <CardDescription>
           Every feature in the {PLAN_LABELS[plan]} edition is enabled. There is no account, billing or cloud service in this edition.
@@ -175,14 +175,10 @@ function ImportDialog({
   };
 
   return (
-    <Dialog open={Boolean(pending)} onOpenChange={(o) => !o && !busy && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Import backup</DialogTitle>
-          <DialogDescription>
-            {pending?.name} · exported {p ? new Date(p.exportedAt).toLocaleString() : ""}
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer open={Boolean(pending)} onOpenChange={(o) => !o && !busy && onClose()}>
+      <DrawerContent>
+        <DrawerHeader title="Import backup" description={`${pending?.name ?? ""} · exported ${p ? new Date(p.exportedAt).toLocaleString() : ""}`} />
+        <DrawerBody className="grid content-start gap-5">
         {p && (
           <>
             <ul className="grid gap-1 text-sm">
@@ -202,7 +198,7 @@ function ImportDialog({
                     ["skip", "Skip them", "Leave your existing items exactly as they are."],
                   ] as const
                 ).map(([value, label, hint]) => (
-                  <label key={value} className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring">
+                  <label key={value} className="flex cursor-pointer items-start gap-3 rounded-card border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring">
                     <input type="radio" name={`${id}-policy`} checked={policy === value} onChange={() => setPolicy(value)} className="mt-1" />
                     <span>
                       <span className="block text-sm font-medium">{label}</span>
@@ -215,16 +211,17 @@ function ImportDialog({
             <p className="text-sm text-muted-foreground">Imports are all-or-nothing and never overwrite existing work.</p>
           </>
         )}
-        <DialogFooter>
+        </DrawerBody>
+        <DrawerFooter>
           <Button variant="secondary" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
           <Button onClick={run} disabled={busy}>
             {busy && <Spinner />} Import
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

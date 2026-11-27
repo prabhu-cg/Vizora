@@ -3,21 +3,28 @@ import { Slot } from "radix-ui";
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
+/**
+ * Every button is a pill. Primary (amber fill, charcoal text) is used once per
+ * view. Outline/secondary are white with a strong hairline; ghost is sand on
+ * hover. Destructive is an outline with red text, never a solid red block.
+ */
 export const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-[background-color,transform] duration-150 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-foreground shadow-xs hover:bg-[#1a56bd] active:bg-[#164aa5]",
-        secondary: "border border-input bg-secondary text-secondary-foreground shadow-xs hover:bg-muted active:bg-[#e3e6eb]",
-        ghost: "text-foreground hover:bg-muted active:bg-[#e3e6eb]",
-        destructive: "bg-destructive text-destructive-foreground shadow-xs hover:bg-[#9a1d13] active:bg-[#82170f]",
-        link: "text-primary underline-offset-4 hover:underline",
+        primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        secondary: "border border-border-strong bg-background text-foreground hover:bg-muted",
+        outline: "border border-border-strong bg-background text-foreground hover:bg-muted",
+        ghost: "text-foreground hover:bg-muted",
+        destructive: "border border-border-strong bg-background text-destructive hover:bg-destructive-soft",
+        link: "rounded-sm text-primary-text underline underline-offset-4 hover:no-underline",
       },
       size: {
-        sm: "h-8 px-3",
-        md: "h-10 px-4",
-        lg: "h-11 px-5 text-base",
+        xs: "h-7 px-3 text-xs",
+        sm: "h-9 px-4",
+        md: "h-10 px-5",
+        lg: "h-12 px-7 text-base",
         icon: "size-10",
       },
     },

@@ -19,9 +19,9 @@ export function ProjectCard({
 }) {
   const count = project.visualisationCount;
   return (
-    <Card className="group relative transition-shadow hover:shadow-md">
+    <Card className="group relative transition-colors hover:border-primary focus-within:border-primary">
       <div className="flex items-start gap-3 p-5">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-soft text-brand-violet">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-text">
           <Folder className="size-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1 pr-8">

@@ -44,9 +44,9 @@ export function DataPanel({
   return (
     <section aria-labelledby={`${inputId}-h`} className="grid gap-4 p-4">
       <div>
-        <h2 id={`${inputId}-h`} className="text-sm font-semibold">
+        <h3 id={`${inputId}-h`} className="text-[15px] font-semibold">
           Data
-        </h2>
+        </h3>
         <p className="mt-0.5 text-xs text-muted-foreground">Files are read in your browser and never uploaded.</p>
       </div>
 
@@ -68,14 +68,14 @@ export function DataPanel({
       )}
 
       {doc.data.datasets.length === 0 ? (
-        <p className="flex items-start gap-2 rounded-md bg-muted p-3 text-sm text-muted-foreground">
+        <p className="flex items-start gap-2 rounded-input bg-muted p-3 text-sm text-muted-foreground">
           <Database className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           No datasets yet.
         </p>
       ) : (
         <ul className="grid gap-2">
           {doc.data.datasets.map((ds) => (
-            <li key={ds.id} className="rounded-md border border-border p-3">
+            <li key={ds.id} className="rounded-input border border-border p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{ds.name}</p>

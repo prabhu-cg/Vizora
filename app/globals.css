@@ -1,57 +1,46 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
-/* Expose tokens as Tailwind utilities (bg-primary, text-muted-foreground, rounded-lg ...) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary-text: var(--primary-text);
+  --color-primary-soft: var(--primary-soft);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-success: var(--success);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-body: var(--body);
-
-  --color-navy: var(--vz-navy);
-  --color-charcoal: var(--vz-charcoal);
-  --color-brand-blue: var(--vz-blue);
-  --color-brand-cyan: var(--vz-cyan);
-  --color-brand-violet: var(--vz-violet);
-  --color-brand-orange: var(--vz-orange);
-  --color-blue-soft: var(--vz-blue-soft);
-  --color-violet-soft: var(--vz-violet-soft);
-  --color-cyan-soft: var(--vz-cyan-soft);
-  --color-orange-soft: var(--vz-orange-soft);
-  --color-orange-text: var(--vz-orange-text);
-  --color-danger-soft: var(--vz-danger-soft);
-  --color-success-soft: var(--vz-success-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
 
   --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
   --font-mono: var(--font-mono);
 
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
-
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
+  --radius-input: var(--radius-input);
+  --radius-menu: var(--radius-menu);
+  --radius-card: var(--radius-card);
+  --shadow-overlay: var(--shadow-overlay);
+  --shadow-drawer: var(--shadow-drawer);
 }
 
 @layer base {
@@ -64,24 +53,23 @@
   }
   body {
     background: var(--background);
-    color: var(--foreground);
+    color: var(--body);
     font-family: var(--font-sans);
-    font-size: var(--text-base);
-    line-height: var(--leading-normal);
+    font-size: 0.875rem; /* 14px app body */
+    line-height: 1.43;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 {
-    letter-spacing: var(--tracking-tight);
-    line-height: var(--leading-tight);
-    font-weight: 650;
-    color: var(--foreground);
+  .marketing {
+    font-size: 1rem;
+    line-height: 1.6;
   }
   :focus-visible {
-    outline: var(--focus-ring-width) solid var(--ring);
-    outline-offset: var(--focus-ring-offset);
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   ::selection {
-    background: rgb(40 120 240 / 0.22);
+    background: var(--primary-soft);
+    color: var(--foreground);
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -93,19 +81,54 @@
   }
 }
 
-/* React Flow: align chrome with tokens, keep controls readable */
+/* The One Heading Rule: Newsreader 500 for every h1, h2 and .font-display.
+   Unlayered so no utility (e.g. font-bold) can change it. */
+h1, h2, .font-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+h1, h2 { line-height: 1.25; }
+h3, h4 { color: var(--foreground); font-weight: 600; }
+strong, b { font-weight: 600; }
+
+/* Drawers and dialogs: slide / fade, 220ms in, 180ms out. */
+@keyframes vz-slide-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes vz-slide-out { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes vz-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vz-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes vz-pop-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes vz-pop-out { from { opacity: 1; transform: translate(-50%, -50%); } to { opacity: 0; transform: translate(-50%, -50%) scale(0.97); } }
+.vz-drawer[data-state="open"] { animation: vz-slide-in var(--duration-in) var(--ease-standard); }
+.vz-drawer[data-state="closed"] { animation: vz-slide-out var(--duration-out) ease-in; }
+.vz-scrim[data-state="open"] { animation: vz-fade-in var(--duration-out) ease-out; }
+.vz-scrim[data-state="closed"] { animation: vz-fade-out 150ms ease-in; }
+.vz-dialog[data-state="open"] { animation: vz-pop-in var(--duration-out) var(--ease-standard); }
+.vz-dialog[data-state="closed"] { animation: vz-pop-out 120ms ease-in; }
+
+/* React Flow follows the tokens (its own colorMode handles the rest). */
 .react-flow__attribution { display: none; }
 .vz-flow .react-flow__node-default,
 .vz-flow .react-flow__node-input,
 .vz-flow .react-flow__node-output {
-  border-radius: var(--radius-md);
-  border: 1px solid var(--vz-border);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  box-shadow: none;
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: var(--text-sm);
+  font-size: 0.875rem;
   padding: 0.5rem 0.75rem;
 }
-.vz-flow .react-flow__node.selected {
-  box-shadow: 0 0 0 2px var(--vz-blue);
+.vz-flow .react-flow__node.selected,
+.vz-flow .react-flow__node:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary);
 }
+.vz-flow .react-flow__controls-button {
+  background: var(--card);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.vz-flow .react-flow__minimap { background: var(--surface); }

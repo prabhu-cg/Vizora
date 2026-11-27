@@ -1,29 +1,28 @@
 import { cn } from "@/lib/utils/cn";
 
 /**
- * PLACEHOLDER BRAND MARK. No approved VIZORA logo assets were supplied with
- * this build. Replace the SVG below (and app/icon.svg) with the approved
- * assets; see public/brand/README.md. All callers go through this component,
- * so it is the only place to change.
+ * The approved VIZORA mark (public/brand/vizora-logo.svg): two wings. Paths and
+ * the right-wing colour are exactly as supplied; the left wing reads
+ * --brand-ink so it stays visible in dark mode (#202B27 light, #E7E0D6 dark).
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 32 32"
-      className={cn("size-8 shrink-0", className)}
+      viewBox="0 0 134 128"
+      className={cn("h-8 w-auto shrink-0", className)}
       role="img"
-      aria-label="VIZORA"
+      aria-label="Vizora"
       focusable="false"
+      fill="none"
     >
-      <defs>
-        <linearGradient id="vz-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2878F0" />
-          <stop offset="1" stopColor="#8055E8" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="8" fill="url(#vz-grad)" />
-      <path d="M9 10l7 13 7-13" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="16" cy="9" r="2.2" fill="#16C7D9" />
+      <path
+        className="fill-(--brand-ink)"
+        d="M25.1456 0H8.52703C1.91617 0 -2.17249 7.19237 1.21838 12.8567L70.1472 128L84.5294 93.0691C85.5273 90.6455 85.3492 87.8979 84.0467 85.6228L39.9299 8.56355C36.8983 3.26807 31.2562 0 25.1456 0Z"
+      />
+      <path
+        d="M134 0H91.6927C78.6961 0 70.4906 13.9469 76.8221 25.2756L97.7225 62.6722L134 0Z"
+        fill="#D4A615"
+      />
     </svg>
   );
 }
@@ -32,7 +31,7 @@ export function Logo({ className, showWordmark = true }: { className?: string; s
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <LogoMark />
-      {showWordmark && <span className="text-lg font-bold tracking-[0.12em] text-navy">VIZORA</span>}
+      {showWordmark && <span className="font-display text-2xl leading-none text-foreground">Vizora</span>}
     </span>
   );
 }

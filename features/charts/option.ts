@@ -1,4 +1,4 @@
-import { chartPalette, brand } from "@/lib/design/tokens";
+import { FALLBACK_CHART_THEME, type ChartTheme } from "./theme";
 import type { Dataset, VisualisationIR } from "@/types/visualisation";
 
 export type ChartKind = "bar" | "line";
@@ -31,7 +31,7 @@ export function selectChartData(doc: ChartInput): ChartSelection | undefined {
 }
 
 /** Pure IR → ECharts option. Returns undefined when no dataset is chartable. */
-export function buildChartOption(doc: ChartInput): Record<string, unknown> | undefined {
+export function buildChartOption(doc: ChartInput, theme: ChartTheme = FALLBACK_CHART_THEME): Record<string, unknown> | undefined {
   const selection = selectChartData(doc);
   if (!selection) return undefined;
   const { dataset, categoryKey, valueKeys } = selection;
@@ -39,19 +39,19 @@ export function buildChartOption(doc: ChartInput): Record<string, unknown> | und
   const labelOf = (key: string) => dataset.columns.find((c) => c.key === key)?.label ?? key;
 
   return {
-    color: [...chartPalette],
+    color: theme.series,
     aria: { enabled: true, decal: { show: true } },
     animation: !(typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches),
-    textStyle: { fontFamily: "inherit", color: brand.charcoal },
+    textStyle: { fontFamily: "inherit", color: theme.text },
     tooltip: { trigger: "axis" },
     legend: valueKeys.length > 1 ? { top: 0 } : undefined,
     grid: { left: 8, right: 16, top: valueKeys.length > 1 ? 40 : 16, bottom: 8, containLabel: true },
     xAxis: {
       type: "category",
       data: dataset.rows.map((r) => String(r[categoryKey] ?? "")),
-      axisLine: { lineStyle: { color: brand.border } },
+      axisLine: { lineStyle: { color: theme.grid } },
     },
-    yAxis: { type: "value", splitLine: { lineStyle: { color: brand.border } } },
+    yAxis: { type: "value", splitLine: { lineStyle: { color: theme.grid } } },
     series: valueKeys.map((key) => ({
       name: labelOf(key),
       type: kind,

@@ -24,8 +24,8 @@ export function VisualisationRow({
   const meta = TYPE_META[item.type];
   const Icon = meta.icon;
   return (
-    <li className="relative flex items-center gap-3 rounded-lg border border-border bg-card p-3 pr-14 shadow-xs transition-shadow hover:shadow-md sm:p-4 sm:pr-16">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-soft text-primary">
+    <li className="relative flex items-center gap-3 rounded-card border border-border bg-card p-3 pr-14 transition-colors hover:border-primary sm:p-4 sm:pr-16">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-text">
         <Icon className="size-5" aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
@@ -35,7 +35,7 @@ export function VisualisationRow({
           </Link>
         </h3>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-          <Badge variant="blue">{meta.label}</Badge>
+          <Badge variant="soft">{meta.label}</Badge>
           {context && <span className="truncate">{context}</span>}
           <span>Updated {formatRelative(item.updatedAt)}</span>
         </p>

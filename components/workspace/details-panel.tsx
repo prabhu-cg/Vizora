@@ -26,10 +26,10 @@ export function DetailsPanel({
   ];
   return (
     <section aria-labelledby={`${id}-h`} className="grid gap-4 p-4">
-      <h2 id={`${id}-h`} className="text-sm font-semibold">
+      <h3 id={`${id}-h`} className="text-[15px] font-semibold">
         Details
-      </h2>
-      <Badge variant="blue" className="w-fit">
+      </h3>
+      <Badge variant="soft" className="w-fit">
         {TYPE_META[doc.type].label}
       </Badge>
 

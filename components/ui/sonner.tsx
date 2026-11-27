@@ -1,16 +1,19 @@
 "use client";
 
 import { Toaster as Sonner } from "sonner";
+import { useTheme } from "@/hooks/use-theme";
 
+/** Bottom centre: the drawer's primary button sits bottom right, and a toast under a resting pointer never times out. */
 export function Toaster() {
+  const { theme } = useTheme();
   return (
     <Sonner
-      position="bottom-right"
+      position="bottom-center"
+      theme={theme}
       closeButton
-      richColors={false}
       toastOptions={{
         classNames: {
-          toast: "!rounded-lg !border !border-border !bg-popover !text-popover-foreground !shadow-md",
+          toast: "!rounded-menu !border !border-border-strong !bg-popover !text-body !shadow-overlay",
           description: "!text-muted-foreground",
         },
       }}

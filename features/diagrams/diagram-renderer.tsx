@@ -17,7 +17,6 @@ import { Plus } from "lucide-react";
 import { useCallback, useRef } from "react";
 import type { RendererProps } from "@/components/visualisations/registry";
 import { Button } from "@/components/ui/button";
-import { brand } from "@/lib/design/tokens";
 import { createId } from "@/lib/utils/id";
 import { createNode } from "@/lib/visualisation/factory";
 import { applyPositions, toFlowEdges, toFlowNodes } from "./adapter";
@@ -102,12 +101,12 @@ export default function DiagramRenderer({ document: doc, onChange }: RendererPro
         aria-label="Diagram canvas. Tab to a node, use arrow keys to move it, Delete to remove it."
         proOptions={{ hideAttribution: true }}
       >
-        <Background color={brand.border} gap={20} />
+        <Background color="var(--border-strong)" gap={20} />
         <Controls showInteractive={false} />
-        <MiniMap pannable zoomable ariaLabel="Diagram overview" nodeColor={brand.blue} className="!hidden md:!block" />
+        <MiniMap pannable zoomable ariaLabel="Diagram overview" nodeColor="var(--primary)" maskColor="var(--scrim)" className="!hidden md:!block" />
       </ReactFlow>
       <div className="absolute left-3 top-3 z-10">
-        <Button size="sm" variant="secondary" onClick={addNode}>
+        <Button size="sm" variant="outline" onClick={addNode}>
           <Plus aria-hidden="true" /> Add node
         </Button>
       </div>

@@ -9,14 +9,19 @@ import { useEffect, useMemo, useRef } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import type { RendererProps } from "@/components/visualisations/registry";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/use-theme";
 import { buildChartOption, chartKindOf, type ChartKind } from "./option";
+import { readChartTheme } from "./theme";
 
 echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, AriaComponent, CanvasRenderer]);
 
 export default function ChartRenderer({ document: doc, onChange }: RendererProps) {
   const host = useRef<HTMLDivElement>(null);
   const { data, configuration } = doc;
-  const option = useMemo(() => buildChartOption({ data, configuration }), [data, configuration]);
+  const { theme } = useTheme();
+  // `theme` is a dependency on purpose: colours are resolved from CSS tokens at build time of the option.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const option = useMemo(() => buildChartOption({ data, configuration }, readChartTheme()), [data, configuration, theme]);
   const kind = chartKindOf({ data, configuration });
 
   useEffect(() => {
@@ -51,7 +56,7 @@ export default function ChartRenderer({ document: doc, onChange }: RendererProps
     <div className="flex h-full min-h-96 flex-col">
       <div className="flex items-center gap-2 border-b border-border px-3 py-2" role="group" aria-label="Chart type">
         {(["bar", "line"] as const).map((k) => (
-          <Button key={k} size="sm" variant={kind === k ? "primary" : "secondary"} aria-pressed={kind === k} onClick={() => setKind(k)}>
+          <Button key={k} size="sm" variant={kind === k ? "primary" : "outline"} aria-pressed={kind === k} onClick={() => setKind(k)}>
             {k === "bar" ? "Bar" : "Line"}
           </Button>
         ))}

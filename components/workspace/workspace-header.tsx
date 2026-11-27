@@ -88,7 +88,7 @@ export function WorkspaceHeader({
           onBlur={() => !draft.trim() && setDraft(doc.title)}
           maxLength={200}
           aria-invalid={draft.trim() ? undefined : true}
-          className="h-10 border-transparent bg-transparent text-base font-semibold shadow-none hover:border-input focus-visible:bg-surface"
+          className="h-10 border-transparent bg-transparent text-base font-semibold hover:border-input focus-visible:bg-background"
         />
       </div>
 

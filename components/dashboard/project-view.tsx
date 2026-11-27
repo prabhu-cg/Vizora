@@ -29,7 +29,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
   const [deleting, setDeleting] = useState<VisualisationSummary>();
 
   const back = (
-    <Link href="/app/dashboard" className="inline-flex items-center gap-1.5 rounded-sm font-medium text-primary hover:underline">
+    <Link href="/app/dashboard" className="inline-flex items-center gap-1.5 rounded-sm font-medium text-primary-text hover:underline">
       <ArrowLeft className="size-4" aria-hidden="true" /> All projects
     </Link>
   );

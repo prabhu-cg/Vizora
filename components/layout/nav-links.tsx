@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { APP_NAV } from "./nav-items";
 
+/** Pill items: current is butter with ochre semibold text; hover is sand. */
 export function NavLinks({ onNavigate, orientation = "vertical" }: { onNavigate?: () => void; orientation?: "vertical" | "horizontal" }) {
   const pathname = usePathname();
   return (
@@ -19,8 +20,8 @@ export function NavLinks({ onNavigate, orientation = "vertical" }: { onNavigate?
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors",
-                  active ? "bg-accent text-accent-foreground" : "text-body hover:bg-muted",
+                  "flex min-h-10 items-center gap-3 rounded-full px-4 text-sm transition-colors",
+                  active ? "bg-accent font-semibold text-accent-foreground" : "font-medium text-body hover:bg-muted",
                 )}
               >
                 <Icon className="size-4" aria-hidden="true" />

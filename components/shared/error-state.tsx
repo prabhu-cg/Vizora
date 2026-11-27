@@ -14,8 +14,8 @@ export function ErrorState({
   children?: ReactNode;
 }) {
   return (
-    <div role="alert" className="flex flex-col items-center rounded-lg border border-border bg-surface px-6 py-12 text-center">
-      <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger-soft text-destructive">
+    <div role="alert" className="flex flex-col items-center rounded-card border border-border bg-card px-6 py-12 text-center">
+      <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-destructive-soft text-destructive">
         <AlertTriangle className="size-6" aria-hidden="true" />
       </span>
       <h2 className="text-lg font-semibold">{title}</h2>

@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { Spinner } from "@/components/shared/loading-state";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader } from "@/components/ui/drawer";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { errorMessage, notify } from "@/lib/notify";
@@ -23,11 +23,11 @@ export function ProjectFormDialog({
   onSubmit: (input: ProjectInput) => Promise<void>;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
         <ProjectForm project={project} onCancel={() => onOpenChange(false)} onSubmit={onSubmit} onDone={() => onOpenChange(false)} />
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
@@ -68,13 +68,12 @@ function ProjectForm({
   };
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-4">
-      <DialogHeader>
-        <DialogTitle>{editing ? "Edit project" : "New project"}</DialogTitle>
-        <DialogDescription>
-          {editing ? "Rename the project or update its description." : "A project groups related visualisations."}
-        </DialogDescription>
-      </DialogHeader>
+    <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
+      <DrawerHeader
+        title={editing ? "Edit project" : "New project"}
+        description={editing ? "Rename the project or update its description." : "A project groups related visualisations."}
+      />
+      <DrawerBody className="grid content-start gap-5">
 
       <div className="grid gap-1.5">
         <Label htmlFor={`${id}-name`}>Name</Label>
@@ -114,7 +113,8 @@ function ProjectForm({
         )}
       </div>
 
-      <DialogFooter>
+      </DrawerBody>
+      <DrawerFooter>
         <Button variant="secondary" onClick={onCancel} disabled={pending}>
           Cancel
         </Button>
@@ -122,7 +122,7 @@ function ProjectForm({
           {pending && <Spinner />}
           {editing ? "Save changes" : "Create project"}
         </Button>
-      </DialogFooter>
+      </DrawerFooter>
     </form>
   );
 }

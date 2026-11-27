@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { Spinner } from "@/components/shared/loading-state";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { creatableTypes } from "@/components/visualisations/registry";
@@ -23,11 +23,11 @@ export function NewVisualisationDialog({
   onCreate: (input: NewVisualisationInput) => Promise<void>;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
         <Form onCancel={() => onOpenChange(false)} onCreate={onCreate} onDone={() => onOpenChange(false)} />
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
@@ -65,11 +65,9 @@ function Form({
   };
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-4">
-      <DialogHeader>
-        <DialogTitle>New visualisation</DialogTitle>
-        <DialogDescription>Choose a type. You can import data after it opens.</DialogDescription>
-      </DialogHeader>
+    <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
+      <DrawerHeader title="New visualisation" description="Choose a type. You can import data after it opens." />
+      <DrawerBody className="grid content-start gap-5">
 
       <div className="grid gap-1.5">
         <Label htmlFor={`${id}-title`}>Title</Label>
@@ -100,12 +98,12 @@ function Form({
             <label
               key={t}
               className={cn(
-                "flex min-h-14 cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
+                "flex min-h-14 cursor-pointer items-center gap-3 rounded-card border p-3 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
                 selected ? "border-primary bg-accent" : "border-border hover:bg-muted",
               )}
             >
               <input type="radio" name={`${id}-type`} value={t} checked={selected} onChange={() => setType(t)} className="sr-only" />
-              <Icon className="size-5 shrink-0 text-primary" aria-hidden="true" />
+              <Icon className="size-5 shrink-0 text-primary-text" aria-hidden="true" />
               <span>
                 <span className="block text-sm font-medium">{meta.label}</span>
                 <span className="block text-sm text-muted-foreground">{meta.description}</span>
@@ -115,7 +113,8 @@ function Form({
         })}
       </fieldset>
 
-      <DialogFooter>
+      </DrawerBody>
+      <DrawerFooter>
         <Button variant="secondary" onClick={onCancel} disabled={pending}>
           Cancel
         </Button>
@@ -123,7 +122,7 @@ function Form({
           {pending && <Spinner />}
           Create visualisation
         </Button>
-      </DialogFooter>
+      </DrawerFooter>
     </form>
   );
 }

@@ -89,7 +89,7 @@ export function WorkspaceView({ visualisationId }: { visualisationId: string }) 
             onClick={() => setPanel(p.id)}
             className={cn(
               "min-h-11 flex-1 border-b-2 px-3 text-sm font-medium",
-              panel === p.id ? "border-primary text-primary" : "border-transparent text-muted-foreground",
+              panel === p.id ? "border-primary text-primary-text" : "border-transparent text-muted-foreground",
             )}
           >
             {p.label}
@@ -109,7 +109,7 @@ export function WorkspaceView({ visualisationId }: { visualisationId: string }) 
           id="main"
           tabIndex={-1}
           aria-label="Canvas"
-          className={cn("min-h-0 min-w-0 bg-surface outline-none", panel === "canvas" ? "block" : "hidden", "lg:block")}
+          className={cn("min-h-0 min-w-0 bg-background outline-none", panel === "canvas" ? "block" : "hidden", "lg:block")}
         >
           <ErrorBoundary resetKey={loadKey} title="This visualisation could not be drawn">
             {hasRenderer(doc.type) ? (

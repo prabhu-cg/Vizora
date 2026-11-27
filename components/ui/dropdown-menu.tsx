@@ -7,18 +7,14 @@ import { cn } from "@/lib/utils/cn";
 export const DropdownMenu = MenuPrimitive.Root;
 export const DropdownMenuTrigger = MenuPrimitive.Trigger;
 
-export function DropdownMenuContent({
-  className,
-  sideOffset = 6,
-  ...props
-}: React.ComponentProps<typeof MenuPrimitive.Content>) {
+export function DropdownMenuContent({ className, sideOffset = 6, ...props }: React.ComponentProps<typeof MenuPrimitive.Content>) {
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Content
         sideOffset={sideOffset}
         align="end"
         className={cn(
-          "z-50 min-w-48 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md",
+          "z-50 min-w-48 overflow-hidden rounded-menu border border-border-strong bg-popover p-1 text-body shadow-overlay",
           className,
         )}
         {...props}
@@ -35,8 +31,8 @@ export function DropdownMenuItem({
   return (
     <MenuPrimitive.Item
       className={cn(
-        "relative flex min-h-9 cursor-default select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-muted [&_svg]:size-4 [&_svg]:shrink-0",
-        destructive && "text-destructive data-[highlighted]:bg-danger-soft",
+        "relative flex min-h-9 cursor-default select-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-muted [&_svg]:size-4 [&_svg]:shrink-0",
+        destructive && "text-destructive data-[highlighted]:bg-destructive-soft",
         className,
       )}
       {...props}
