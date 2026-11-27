@@ -1,0 +1,55 @@
+import {
+  CURRENT_VISUALISATION_SCHEMA_VERSION,
+  formatZodError,
+  migrateDocument,
+  visualisationSchema,
+  type MigrationStep,
+} from "@/lib/validation";
+import type { VisualisationIR } from "@/types/visualisation";
+import { DEFAULT_LAYOUT, DEFAULT_VIEWPORT } from "./defaults";
+
+/**
+ * Visualisation migration registry. `steps[n]` upgrades schema n → n+1.
+ * To change the IR: bump CURRENT_VISUALISATION_SCHEMA_VERSION, update the
+ * schema, add `steps[oldVersion]`, and add a fixture test.
+ */
+const steps: Record<number, MigrationStep> = {
+  // v0 (unversioned pre-release documents) → v1: fill every field the v1 IR requires.
+  0: (doc) => {
+    const now = new Date().toISOString();
+    const updatedAt = typeof doc.updatedAt === "string" ? doc.updatedAt : now;
+    return {
+      ...doc,
+      title: typeof doc.title === "string" && doc.title.trim() ? doc.title : "Untitled visualisation",
+      description: typeof doc.description === "string" ? doc.description : "",
+      type: doc.type ?? "diagram",
+      source: doc.source ?? { kind: "manual" },
+      nodes: doc.nodes ?? [],
+      edges: doc.edges ?? [],
+      data: doc.data ?? { datasets: [] },
+      configuration: doc.configuration ?? { options: {} },
+      layout: doc.layout ?? DEFAULT_LAYOUT,
+      viewport: doc.viewport ?? DEFAULT_VIEWPORT,
+      createdAt: typeof doc.createdAt === "string" ? doc.createdAt : updatedAt,
+      updatedAt,
+    };
+  },
+};
+
+export class InvalidVisualisationError extends Error {
+  override name = "InvalidVisualisationError";
+}
+
+/** Migrate any supported historical shape to the current IR, then strictly validate it. */
+export function parseVisualisation(raw: unknown): VisualisationIR {
+  const migrated = migrateDocument(raw, {
+    kind: "visualisation",
+    current: CURRENT_VISUALISATION_SCHEMA_VERSION,
+    steps,
+  });
+  const result = visualisationSchema.safeParse(migrated);
+  if (!result.success) {
+    throw new InvalidVisualisationError(`Invalid visualisation: ${formatZodError(result.error)}`);
+  }
+  return result.data;
+}

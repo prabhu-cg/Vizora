@@ -1,0 +1,128 @@
+/*
+ * VIZORA design tokens — single source of truth (CSS custom properties).
+ * lib/design/tokens.ts mirrors the brand palette for JS consumers (charts,
+ * canvas); tests/unit/design-tokens.test.ts fails if the two drift apart.
+ *
+ * Layers: 1) brand palette  2) functional palette  3) semantic roles
+ *         4) typography, spacing, radius, shadow, motion, component states.
+ */
+:root {
+  color-scheme: light;
+
+  /* 1. Brand palette (as supplied) */
+  --vz-navy: #111827;
+  --vz-charcoal: #353535;
+  --vz-blue: #2878f0;
+  --vz-cyan: #16c7d9;
+  --vz-violet: #8055e8;
+  --vz-orange: #f5a044;
+  --vz-white: #ffffff;
+  --vz-bg: #f7f8fa;
+  --vz-border: #e5e7eb;
+  --vz-muted: #777777;
+
+  /*
+   * 2. Accessible derivatives. Raw brand Blue (4.2:1) and Muted (4.5:1 on
+   * white, less on the page background) miss WCAG AA for small text, so text
+   * and filled controls use these darker steps; raw brand colours remain for
+   * graphics, focus rings and decoration (3:1 non-text rule).
+   */
+  --vz-blue-strong: #1d63d8;
+  --vz-blue-soft: #eaf1fe;
+  --vz-violet-soft: #f1ecfd;
+  --vz-cyan-soft: #e3f8fa;
+  --vz-orange-soft: #fef3e4;
+  --vz-orange-text: #8a4b00;
+  --vz-muted-text: #6b6b6b;
+  --vz-danger: #b42318;
+  --vz-danger-soft: #fef0ee;
+  --vz-success: #067647;
+  --vz-success-soft: #e7f6ee;
+
+  /* Brand gradient — restrained blue to violet */
+  --vz-gradient-brand: linear-gradient(135deg, #2878f0 0%, #8055e8 100%);
+
+  /* 3. Semantic roles */
+  --background: var(--vz-bg);
+  --foreground: var(--vz-navy);
+  --surface: var(--vz-white);
+  --card: var(--vz-white);
+  --card-foreground: var(--vz-navy);
+  --popover: var(--vz-white);
+  --popover-foreground: var(--vz-navy);
+  --primary: var(--vz-blue-strong);
+  --primary-foreground: var(--vz-white);
+  --secondary: var(--vz-white);
+  --secondary-foreground: var(--vz-navy);
+  --muted: #eef0f3;
+  --muted-foreground: var(--vz-muted-text);
+  --accent: var(--vz-blue-soft);
+  --accent-foreground: var(--vz-blue-strong);
+  --destructive: var(--vz-danger);
+  --destructive-foreground: var(--vz-white);
+  --success: var(--vz-success);
+  --warning-foreground: var(--vz-orange-text);
+  --border: var(--vz-border);
+  --input: #858b95; /* 3:1+ on white and page bg: WCAG 1.4.11 control boundary */
+  --ring: var(--vz-blue);
+  --body: var(--vz-charcoal);
+
+  /* 4a. Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.25rem;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+  --tracking-tight: -0.02em;
+
+  /* 4b. Spacing (4px grid) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* 4c. Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* 4d. Shadows */
+  --shadow-xs: 0 1px 2px rgb(17 24 39 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(17 24 39 / 0.08), 0 1px 2px rgb(17 24 39 / 0.04);
+  --shadow-md: 0 6px 16px -4px rgb(17 24 39 / 0.1), 0 2px 6px -2px rgb(17 24 39 / 0.06);
+  --shadow-lg: 0 18px 40px -12px rgb(17 24 39 / 0.18);
+  --shadow-focus: 0 0 0 3px rgb(40 120 240 / 0.35);
+
+  /* 4e. Motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* 4f. Component states */
+  --state-hover-overlay: rgb(17 24 39 / 0.04);
+  --state-pressed-overlay: rgb(17 24 39 / 0.08);
+  --state-disabled-opacity: 0.5;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --control-height-sm: 2rem;
+  --control-height-md: 2.5rem;
+  --control-height-lg: 2.75rem;
+  --touch-target-min: 2.75rem;
+}
