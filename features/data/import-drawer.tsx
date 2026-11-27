@@ -55,6 +55,7 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
     setBusy(true);
     setFileError(undefined);
     try {
+      await new Promise((r) => requestAnimationFrame(() => r(null))); // let "Reading…" paint before the heavy work
       const r = await readFile(file);
       setRead(r);
       setSheet(r.raw.sheet);
@@ -83,11 +84,11 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
   const built: { preview?: IngestPreview; error?: string } = useMemo(() => {
     if (!raw.table) return { error: raw.error };
     try {
-      return { preview: buildDataset(raw.table, { header, types, removeDuplicates: dedupe, name: name || (mode === "paste" ? "Pasted data" : "Dataset") }) };
+      return { preview: buildDataset(raw.table, { header, types, removeDuplicates: dedupe, name: "Dataset" }) };
     } catch (e) {
       return { error: e instanceof IngestError ? e.message : errorMessage(e) };
     }
-  }, [raw, header, types, dedupe, name, mode]);
+  }, [raw, header, types, dedupe]);
 
   const manual = useMemo(() => (mode === "manual" ? datasetFromGrid(grid, { name: name || "Manual data" }) : undefined), [mode, grid, name]);
   const manualProfile = useMemo(() => (manual ? profileDataset(manual) : undefined), [manual]);
@@ -95,7 +96,7 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
   const canAdd = mode === "manual" ? Boolean(manual && manual.rows.length > 0) : Boolean(built.preview);
   const submit = () => {
     if (mode === "manual" && manual) return onAdd(manual);
-    if (built.preview) onAdd(built.preview.dataset, mode === "file" ? read?.source : { format: "paste", size: text.length, name: "Pasted data" });
+    if (built.preview) onAdd({ ...built.preview.dataset, name: name || (mode === "paste" ? "Pasted data" : "Dataset") }, mode === "file" ? read?.source : { format: "paste", size: text.length, name: "Pasted data" });
   };
   const hasDupes = (built.preview?.profile.duplicateRows ?? 0) > 0 || (built.preview?.duplicatesRemoved ?? 0) > 0;
   const sheets = raw.table?.sheets;
@@ -121,7 +122,7 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
             <input ref={input} id={`${id}-file`} type="file" accept={ACCEPT_ATTRIBUTE} className="sr-only" onChange={(e) => void onFile(e.target.files?.[0])} disabled={busy} />
             <div>
               <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}>
-                {busy ? <Spinner /> : <FileUp aria-hidden="true" />} {read ? "Choose a different file" : "Choose a file"}
+                {busy ? <Spinner /> : <FileUp aria-hidden="true" />} {busy ? "Reading and analysing…" : read ? "Choose a different file" : "Choose a file"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">CSV, TSV, JSON or Excel (.xlsx), up to 25 MB.</p>

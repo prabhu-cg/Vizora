@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { RecentView } from "@/components/dashboard/recent-view";
 import { ProjectView } from "@/components/dashboard/project-view";
 import { Select } from "@/components/ui/input";
 import { StoragePanel } from "@/components/settings/storage-panel";
@@ -67,17 +68,6 @@ describe("Select", () => {
 });
 
 describe("Dashboard", () => {
-  it("shows recent projects and recent visualisations, with how recently they changed", async () => {
-    const { s } = await seed();
-    renderWith(s, <DashboardView />);
-    const recentProjects = await screen.findByRole("region", { name: "Recent projects" }).catch(() => screen.getByRole("heading", { name: "Recent projects" }).closest("section")!);
-    expect(within(recentProjects as HTMLElement).getAllByRole("link").map((l) => l.textContent)).toEqual(["Research", "Product launch"]); // most recently changed first (a visualisation was added to Research last)
-    const recentViz = screen.getByRole("heading", { name: "Recent visualisations" }).closest("section")!;
-    expect(within(recentViz).getByText("Interview themes")).toBeInTheDocument();
-    expect(within(recentViz).getAllByText(/Edited just now/).length).toBeGreaterThan(0);
-    expect(within(recentViz).getByText("Research")).toBeInTheDocument(); // which project it belongs to
-  });
-
   it("searching finds projects and visualisations together, and says what it found", async () => {
     const { s } = await seed();
     renderWith(s, <DashboardView />);
@@ -197,7 +187,7 @@ describe("Dashboard", () => {
       const backup = JSON.stringify(await s.backup.exportProject(research.id));
       await s.projects.update(research.id, { name: "Research (edited here)" });
       renderWith(s, <DashboardView />);
-      await screen.findByRole("heading", { name: "Recent projects" });
+      await screen.findByRole("heading", { name: /All projects/ });
       await upload(backup);
       const drawer = await screen.findByRole("dialog", { name: "Import backup" });
       const existing = within(drawer).getByRole("list", { name: "Items that already exist" });
@@ -213,13 +203,34 @@ describe("Dashboard", () => {
     it("refuses a file that is not a valid backup, with a reason, and writes nothing", async () => {
       const { s } = await seed();
       renderWith(s, <DashboardView />);
-      await screen.findByRole("heading", { name: "Recent projects" });
+      await screen.findByRole("heading", { name: /All projects/ });
       await upload("{not json");
       await waitFor(() => expect(screen.queryByRole("dialog", { name: "Import backup" })).toBeNull());
       await upload(JSON.stringify({ hello: "world" }));
       await waitFor(() => expect(screen.queryByRole("dialog", { name: "Import backup" })).toBeNull());
       expect(await s.projects.list()).toHaveLength(2);
     });
+  });
+});
+
+describe("Recent page", () => {
+  it("shows recent projects and visualisations, newest first, with how recently they changed", async () => {
+    const { s } = await seed();
+    renderWith(s, <RecentView />);
+    const projects = (await screen.findByRole("heading", { name: "Recent projects" })).closest("section")!;
+    expect(within(projects).getAllByRole("link").map((l) => l.textContent)).toEqual(["Research", "Product launch"]); // a visualisation was added to Research last
+    const viz = screen.getByRole("heading", { name: "Recent visualisations" }).closest("section")!;
+    expect(within(viz).getByText("Interview themes")).toBeInTheDocument();
+    expect(within(viz).getAllByText(/Edited just now/).length).toBeGreaterThan(0);
+    expect(within(viz).getByText("Research")).toBeInTheDocument(); // which project it belongs to
+  });
+  it("explains itself when there is nothing yet", async () => {
+    renderWith(createTestStorage(), <RecentView />);
+    expect(await screen.findByRole("heading", { name: "Nothing recent yet" })).toBeInTheDocument();
+  });
+  it("is in the sidebar navigation", async () => {
+    const { APP_NAV } = await import("@/components/layout/nav-items");
+    expect(APP_NAV.map((n) => [n.label, n.href])).toContainEqual(["Recent", "/app/recent"]);
   });
 });
 

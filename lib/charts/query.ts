@@ -36,6 +36,10 @@ function ordinal(n: number): string {
 }
 
 const MAX_POINTS = 5000;
+/** The most categories each chart kind draws when no limit is set; beyond it the largest are kept, with a note. */
+export const CATEGORY_CAP: Record<ChartConfig["kind"], number> = {
+  pie: 30, donut: 30, bar: 150, hbar: 60, "stacked-bar": 100, "grouped-bar": 100, line: 5000, area: 5000, "multi-line": 5000, treemap: 300, heatmap: 50, scatter: 5000, histogram: 5000,
+};
 const MAX_HEATMAP = 50;
 
 type Row = Record<string, Cell>;
@@ -261,15 +265,19 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
   let cats = orderKeys(catKeys, xCol);
   let table = cats.map((c) => seriesKeys.map((s) => accs.get(c)!.get(s)?.result(agg) ?? null));
 
-  // Sorting, then Top N.
+  // Sorting, then Top N. With no explicit limit, categories beyond what a chart can show legibly
+  // (and draw quickly) are cut to the largest ones, and the note says so.
   const total = (i: number) => table[i]!.reduce<number>((a, v) => a + (v ?? 0), 0);
+  const autoCap = config.limit === undefined && xCol.type !== "date" ? CATEGORY_CAP[config.kind] : undefined;
+  const effectiveLimit = config.limit ?? (autoCap !== undefined && cats.length > autoCap ? autoCap : undefined);
+  const autoLimited = config.limit === undefined && effectiveLimit !== undefined;
   let order = cats.map((_, i) => i);
   if (config.sort.by === "value") order.sort((a, b) => (config.sort.dir === "asc" ? total(a) - total(b) : total(b) - total(a)));
   else if (config.sort.by === "label") order.sort((a, b) => compare(cats[a]!, cats[b]!, xCol.type === "number" ? "number" : "string") * (config.sort.dir === "asc" ? 1 : -1));
-  else if (config.limit && config.limit < order.length) order.sort((a, b) => total(b) - total(a)); // "top N" implies ranking by value
-  if (config.limit && order.length > config.limit) {
-    const kept = order.slice(0, config.limit);
-    const rest = order.slice(config.limit);
+  else if (effectiveLimit && effectiveLimit < order.length) order.sort((a, b) => total(b) - total(a)); // "top N" implies ranking by value
+  if (effectiveLimit && order.length > effectiveLimit) {
+    const kept = order.slice(0, effectiveLimit);
+    const rest = order.slice(effectiveLimit);
     const canMerge = config.groupOthers && (agg === "sum" || agg === "count");
     if (canMerge) {
       const other = seriesKeys.map((_, s) => rest.reduce<number | null>((a, i) => (table[i]![s] === null ? a : (a ?? 0) + table[i]![s]!), null));
@@ -278,7 +286,7 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
       notes.push(`${rest.length} smaller categor${rest.length === 1 ? "y is" : "ies are"} grouped as “Other”.`);
       order = cats.map((_, i) => i);
     } else {
-      notes.push(`Showing the top ${config.limit} of ${order.length} categories.`);
+      notes.push(autoLimited ? `Showing the largest ${effectiveLimit} of ${order.length.toLocaleString()} categories to keep the chart readable. Change this under Sorting and limits.` : `Showing the top ${config.limit} of ${order.length} categories.`);
       cats = kept.map((i) => cats[i]!);
       table = kept.map((i) => table[i]!);
       order = cats.map((_, i) => i);

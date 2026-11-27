@@ -21,6 +21,8 @@ export interface Selection {
 }
 
 const ID_NAME = /^(id|index|idx|uuid|guid|row|rownum|no|#)$|(^|[ _-])id$/i;
+/** Numbers that are really labels or buckets (zip codes, bins), so they are not worth summing or plotting. */
+const LABEL_NUMBER = /(zip|postal|post ?code|\(bin\)|[ _-]bin$|^bin$)/i;
 const SHARE_NAME = /(share|percent|pct|proportion|mix|split|breakdown|composition|portion|%)/i;
 const q = (c: { label: string }) => `“${c.label}”`;
 const list = (cs: { label: string }[]) => (cs.length <= 2 ? cs.map(q).join(" and ") : `${cs.slice(0, 2).map(q).join(", ")} and ${cs.length - 2} more`);
@@ -57,7 +59,7 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
   const rows = dataset.rows.length;
   const cols = profile.columns;
   const byKey = new Map(cols.map((c) => [c.key, c]));
-  const measures = cols.filter((c) => c.type === "number" && !isIdLike(c, rows) && c.count > 0);
+  const measures = cols.filter((c) => c.type === "number" && !isIdLike(c, rows) && !LABEL_NUMBER.test(c.label) && c.count > 0);
   const dates = cols.filter((c) => c.type === "date" && c.count > 0);
   const cats = cols.filter((c) => (c.type === "string" || c.type === "boolean") && c.distinct >= 2 && c.distinct <= 50 && !isIdLike(c, rows));
   const base = chartConfigSchema.parse({ datasetId: dataset.id });
@@ -107,7 +109,11 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
   if (dates.length && measures.length) {
     const time = dates[0]!;
     const ys = measures.slice(0, 3);
-    const cfg = chartConfigSchema.parse({ ...base, x: time.key, y: ys.map((m) => m.key), });
+    // Hundreds of distinct dates make an unreadable line: group them by month, or by year over a long span.
+    const first = Date.parse(String(time.min)), last = Date.parse(String(time.max));
+    const months = Number.isFinite(first) && Number.isFinite(last) ? (last - first) / 2.63e9 : 0;
+    const timeBucket = time.distinct > 120 ? (months > 120 ? "year" : "month") : "none";
+    const cfg = chartConfigSchema.parse({ ...base, x: time.key, y: ys.map((m) => m.key), timeBucket });
     const kind: ChartKind = ys.length > 1 ? "multi-line" : "line";
     add("area", withKind(cfg, "area"), `An area chart emphasises how much ${q(ys[0]!)} there is over time.`);
     add("bar", withKind(cfg, "bar"), "Bars make individual periods easy to compare.");
@@ -116,7 +122,7 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
     return result({
       kind,
       config: cfg,
-      reason: `${q(time)} is a date and ${list(ys)} ${ys.length > 1 ? "are numbers" : "is a number"}: a ${ys.length > 1 ? "multi-series " : ""}line chart shows how ${ys.length > 1 ? "they" : "it"} change${ys.length > 1 ? "" : "s"} over time.`,
+      reason: `${q(time)} is a date and ${list(ys)} ${ys.length > 1 ? "are numbers" : "is a number"}: a ${ys.length > 1 ? "multi-series " : ""}line chart shows how ${ys.length > 1 ? "they" : "it"} change${ys.length > 1 ? "" : "s"} over time${timeBucket === "none" ? "" : `, grouped by ${timeBucket} because there are ${time.distinct.toLocaleString()} different dates`}.`,
     });
   }
 

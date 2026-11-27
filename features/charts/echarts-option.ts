@@ -21,10 +21,12 @@ export function buildEChartsOption(data: ChartData, config: ChartConfig, theme: 
   const xName = config.xLabel ?? data.xLabel;
   const yName = config.yLabel ?? data.yLabel;
   const textStyle = { fontFamily: "inherit", color: theme.text };
+  const heavy = data.categories.length * Math.max(1, data.series.length) > 400 || (data.points?.length ?? 0) > 400;
   const common: EChartsOption = {
     textStyle,
-    animation: flags.animate ?? true,
-    aria: { enabled: true, decal: { show: flags.decal ?? false } },
+    // Patterns and animation are for readable charts; with hundreds of marks they only cost time.
+    animation: (flags.animate ?? true) && !heavy,
+    aria: { enabled: true, decal: { show: (flags.decal ?? false) && !heavy } },
     title: config.title || config.subtitle ? { text: config.title, subtext: config.subtitle, left: 0, top: 0, textStyle: { color: theme.text, fontSize: 16, fontWeight: 600, fontFamily: "inherit" }, subtextStyle: { color: theme.muted, fontFamily: "inherit" } } : undefined,
     tooltip: { show: config.tooltips, trigger: CARTESIAN.has(kind) ? "axis" : "item", confine: true },
   };

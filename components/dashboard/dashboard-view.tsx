@@ -126,32 +126,8 @@ export function DashboardView() {
       );
     }
 
-    const recentProjects = sortProjects(list, "modified").slice(0, 3);
-    const recentViz = items.slice(0, 5);
     return (
       <div className="grid gap-10">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <section aria-labelledby="recent-projects">
-            <h2 id="recent-projects" className="mb-3 text-lg">Recent projects</h2>
-            <ul className="grid gap-3">
-              {recentProjects.map((p) => (
-                <li key={p.id}><ProjectCard project={p} actions={actions} /></li>
-              ))}
-            </ul>
-          </section>
-          <section aria-labelledby="recent-viz">
-            <h2 id="recent-viz" className="mb-3 text-lg">Recent visualisations</h2>
-            {recentViz.length === 0 ? (
-              <p className="rounded-card border border-dashed border-border-strong p-6 text-sm text-muted-foreground">Nothing yet. Open a project and create a visualisation.</p>
-            ) : (
-              <ul className="grid gap-3">
-                {recentViz.map((v) => (
-                  <VisualisationRow key={v.id} item={v} context={names.get(v.projectId)} />
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
         <section aria-labelledby="all-projects">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 id="all-projects" className="text-lg">All projects <span className="text-sm font-normal text-muted-foreground">({list.length})</span></h2>
