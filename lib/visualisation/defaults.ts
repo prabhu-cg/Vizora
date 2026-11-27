@@ -19,6 +19,8 @@ export function defaultLayoutFor(type: VisualisationType): IRLayout {
       return { algorithm: "layered", direction: "TB", spacing: { x: 90, y: 110 } };
     case "timeline":
       return { algorithm: "linear", direction: "LR", spacing: { x: 40, y: 40 } };
+    case "dashboard":
+      return { algorithm: "grid", direction: "TB", spacing: { x: 16, y: 16 } };
     default:
       return { ...DEFAULT_LAYOUT, spacing: { ...DEFAULT_LAYOUT.spacing } };
   }

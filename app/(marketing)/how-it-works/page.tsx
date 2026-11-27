@@ -14,7 +14,7 @@ export const metadata = pageMetadata({
 
 const EXPORT_EXAMPLE = `{
   "id": "…",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "title": "Quarterly review",
   "type": "chart",
   "source": { "kind": "csv", "name": "sales-2026.csv" },
@@ -56,9 +56,9 @@ export default function HowItWorksPage() {
                   <span className="font-display text-3xl font-medium text-foreground">{s.title}</span>
                 </p>
                 <p className="mt-3 text-lg text-body">{s.body}</p>
-                {i === 0 && <p className="mt-3 text-sm text-muted-foreground">Supported today: pasted text, and CSV or JSON files up to 25 MB.</p>}
-                {i === 1 && <p className="mt-3 text-sm text-muted-foreground">Today: flowcharts, mind maps, concept maps, timelines and bar or line charts. Dashboards are planned.</p>}
-                {i === 2 && <p className="mt-3 text-sm text-muted-foreground">Changes are saved automatically. Export PNG, SVG, editable JSON or a full backup at any time.</p>}
+                {i === 0 && <p className="mt-3 text-sm text-muted-foreground">Supported today: pasted text, and Excel (.xlsx), CSV, TSV or JSON files up to 25 MB.</p>}
+                {i === 1 && <p className="mt-3 text-sm text-muted-foreground">Today: flowcharts, mind maps, concept maps, timelines, thirteen chart types and dashboards.</p>}
+                {i === 2 && <p className="mt-3 text-sm text-muted-foreground">Changes are saved automatically. Export PNG, SVG, CSV, a dashboard PDF, editable JSON or a full backup at any time.</p>}
               </div>
               <div className={i % 2 === 1 ? "md:order-1" : undefined}>
                 <StepVisual step={(i + 1) as 1 | 2 | 3} />

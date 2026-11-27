@@ -96,7 +96,7 @@ describe("backup export/import", () => {
     const target = createTestStorage();
     await target.backup.import(backup, "skip");
     const rec = await target.visualisations.get(v0.id);
-    expect(rec?.document.schemaVersion).toBe(2);
+    expect(rec?.document.schemaVersion).toBe(3);
     expect(rec?.document.title).toBe("Old");
   });
 

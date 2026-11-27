@@ -231,7 +231,7 @@ export function WorkspaceIllustration({ className }: { className?: string }) {
         </svg>
       </div>
       <figcaption className="mt-3 text-sm text-muted-foreground">
-        Illustration, not a screenshot. Flowcharts, mind maps, concept maps, timelines and charts all work today.
+        Illustration, not a screenshot. Flowcharts, mind maps, concept maps, timelines, charts and dashboards all work today.
       </figcaption>
     </figure>
   );

@@ -9,7 +9,7 @@ import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { ErrorState } from "@/components/shared/error-state";
 import { LoadingState } from "@/components/shared/loading-state";
 import { Button } from "@/components/ui/button";
-import { VisualisationRenderer } from "@/components/visualisations/registry";
+import dynamic from "next/dynamic";
 import { EngineCanvas } from "@/features/editor/canvas";
 import { ConvertDialog } from "@/features/editor/convert-dialog";
 import { EditorProvider } from "@/features/editor/context";
@@ -24,9 +24,10 @@ import { isEngineType, type EngineType } from "@/lib/engine";
 import { cn } from "@/lib/utils/cn";
 import type { VisualisationIR } from "@/types/visualisation";
 import { ConflictBanner, SaveErrorBanner } from "./banners";
-import { DataPanel } from "./data-panel";
 import { DetailsPanel } from "./details-panel";
 import { WorkspaceHeader } from "./workspace-header";
+
+const DataWorkspace = dynamic(() => import("./data-workspace"), { ssr: false, loading: () => <LoadingState label="Loading" rows={2} className="p-6" /> });
 
 type PanelId = "canvas" | "side" | "inspector";
 type Editor = ReturnType<typeof useVisualisationEditor>;
@@ -110,42 +111,45 @@ function ReadyWorkspace({ ed, visualisationId, projectId, doc, loadKey }: { ed: 
 
         {engine && <EditorToolbar doc={doc} session={session} update={update} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} onHelp={() => setHelpOpen(true)} />}
 
-        {/* Small screens: one panel at a time. lg+: three columns. */}
-        <div role="group" aria-label="Workspace panels" className="flex border-b border-border bg-surface lg:hidden">
-          {PANELS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              aria-pressed={panel === p.id}
-              onClick={() => setPanel(p.id)}
-              className={cn("min-h-11 flex-1 border-b-2 px-3 text-sm font-medium", panel === p.id ? "border-primary text-primary-text" : "border-transparent text-muted-foreground")}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        {!engine && <DataWorkspace doc={doc} update={update} undo={undo} redo={redo} loadKey={loadKey} />}
 
-        <div className="grid min-h-0 flex-1 lg:grid-cols-[18rem_minmax(0,1fr)_20rem]">
-          <aside aria-label={sideLabel} className={cn("min-h-0 overflow-y-auto border-r border-border bg-surface", panel === "side" ? "block" : "hidden", "lg:block")}>
-            {engine ? <SourcePanel key={loadKey} doc={doc} update={update} /> : <DataPanel key={loadKey} document={doc} onChange={update} />}
-          </aside>
+        {engine && (
+          <>
+          {/* Small screens: one panel at a time. lg+: three columns. */}
+          <div role="group" aria-label="Workspace panels" className="flex border-b border-border bg-surface lg:hidden">
+            {PANELS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                aria-pressed={panel === p.id}
+                onClick={() => setPanel(p.id)}
+                className={cn("min-h-11 flex-1 border-b-2 px-3 text-sm font-medium", panel === p.id ? "border-primary text-primary-text" : "border-transparent text-muted-foreground")}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
 
-          <main id="main" tabIndex={-1} aria-label="Canvas" className={cn("min-h-0 min-w-0 bg-background outline-none", panel === "canvas" ? "block" : "hidden", "lg:block")}>
-            <ErrorBoundary resetKey={`${loadKey}:${doc.type}`} title="This visualisation could not be drawn">
-              {engine ? (
+          <div className="grid min-h-0 flex-1 lg:grid-cols-[18rem_minmax(0,1fr)_20rem]">
+            <aside aria-label={sideLabel} className={cn("min-h-0 overflow-y-auto border-r border-border bg-surface", panel === "side" ? "block" : "hidden", "lg:block")}>
+              <SourcePanel key={loadKey} doc={doc} update={update} />
+            </aside>
+
+            <main id="main" tabIndex={-1} aria-label="Canvas" className={cn("min-h-0 min-w-0 bg-background outline-none", panel === "canvas" ? "block" : "hidden", "lg:block")}>
+              <ErrorBoundary resetKey={`${loadKey}:${doc.type}`} title="This visualisation could not be drawn">
                 <EditorProvider value={session.ctx}>
                   <EngineCanvas key={`${loadKey}:${doc.type}`} />
                 </EditorProvider>
-              ) : (
-                <VisualisationRenderer key={loadKey} type={doc.type} document={doc} onChange={update} />
-              )}
-            </ErrorBoundary>
-          </main>
+              </ErrorBoundary>
+            </main>
 
-          <aside aria-label={inspectorLabel} className={cn("min-h-0 overflow-y-auto border-l border-border bg-surface", panel === "inspector" ? "block" : "hidden", "lg:block")}>
-            {engine ? <Inspector doc={doc} session={session} update={update} fallback={details} /> : details}
-          </aside>
-        </div>
+            <aside aria-label={inspectorLabel} className={cn("min-h-0 overflow-y-auto border-l border-border bg-surface", panel === "inspector" ? "block" : "hidden", "lg:block")}>
+              <Inspector doc={doc} session={session} update={update} fallback={details} />
+            </aside>
+          </div>
+
+          </>
+        )}
 
         {engine && (
           <>

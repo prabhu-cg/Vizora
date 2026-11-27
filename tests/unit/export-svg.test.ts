@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { addDatasetToVisualisation } from "@/features/data-import";
+import { buildDataset, readText } from "@/lib/data";
 import { documentFromInterpretation, getColor, interpret, setStyle, toggleCollapse, updateNode, type EngineType } from "@/lib/engine";
 import { createExportManager, pngExporter, renderDiagramSvg, svgExporter, svgToPng } from "@/lib/export";
 import { createEntitlementService } from "@/features/entitlements";
-import { ingest } from "@/lib/parsers";
 import { createVisualisation } from "@/lib/visualisation/factory";
 import type { VisualisationIR } from "@/types/visualisation";
 
@@ -100,7 +99,11 @@ describe("SVG export", () => {
 });
 
 describe("chart export", () => {
-  const chart = () => addDatasetToVisualisation(createVisualisation({ title: "Sales", type: "chart" }), ingest({ name: "s.csv", text: "Month,Revenue\nJan,10\nFeb,14\nMar,9" }));
+  const chart = () => {
+    const base = createVisualisation({ title: "Sales", type: "chart" });
+    const { dataset } = buildDataset(readText("Month,Revenue\nJan,10\nFeb,14\nMar,9", { name: "s.csv" }), { name: "s" });
+    return { ...base, data: { datasets: [dataset] } };
+  };
 
   it("renders an SVG with the title and data", async () => {
     const art = await svgExporter.run(chart());
@@ -111,7 +114,7 @@ describe("chart export", () => {
     expect(svg).toContain("Revenue");
   });
   it("explains when there is no chartable data", async () => {
-    await expect(svgExporter.run(createVisualisation({ title: "Empty", type: "chart" }))).rejects.toThrow(/no chartable data/i);
+    await expect(svgExporter.run(createVisualisation({ title: "Empty", type: "chart" }))).rejects.toThrow(/no data to chart/i);
   });
 });
 
@@ -163,7 +166,8 @@ describe("export manager", () => {
     const m = createExportManager(createEntitlementService());
     expect(m.available(make(SAMPLES.timeline, "timeline")).map((e) => e.id)).toEqual(["png", "svg", "vizora-json"]);
     expect(m.available(createVisualisation({ title: "T", type: "table" })).map((e) => e.id)).toEqual(["vizora-json"]);
-    expect(pngExporter.supports!(createVisualisation({ title: "T", type: "chart" }))).toBe(true);
+    expect(m.available(make(SAMPLES.timeline, "timeline")).map((e) => e.id)).not.toContain("pdf"); // PDF is for dashboards
+    expect(pngExporter.supports!(createVisualisation({ title: "T", type: "chart" }))).toBe(false); // nothing to draw until data is added
   });
   it("JSON export is editable: re-reading it gives back the same document", async () => {
     const m = createExportManager(createEntitlementService());

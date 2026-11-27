@@ -4,7 +4,7 @@
 Local-first universal visualisation platform. This is the F0 foundation: architecture, storage, shell and tooling. Full visualisation features come in F1+.
 
 ## Stack
-Next.js 16 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS 4 · shadcn-style UI on Radix (restyled to the Butter system) · Lucide · IndexedDB · React Flow (`@xyflow/react`) · Apache ECharts · Zod · Vitest + Testing Library. All dependencies are pinned to exact versions (`.npmrc` `save-exact`, lockfile committed).
+Next.js 16 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS 4 · shadcn-style UI on Radix (restyled to the Butter system) · Lucide · IndexedDB · React Flow (`@xyflow/react`) · Apache ECharts · Zod · `read-excel-file` (.xlsx) · `jspdf` (dashboard PDF) · Vitest + Testing Library. All dependencies are pinned to exact versions (`.npmrc` `save-exact`, lockfile committed).
 
 ## Local development
 ```bash
@@ -21,6 +21,9 @@ Scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `test`, `test:watch`, `fo
 3. Deploy. Or via CLI: `npm i -g vercel && vercel` (preview) / `vercel --prod`.
 
 Notes: all user data lives in the visitor's browser (IndexedDB); the only server code is `/api/health`. Security headers are set in `next.config.ts`.
+
+## Data visualisation engine (F3)
+Import Excel, CSV, TSV, JSON, pasted or typed data (all in the browser, originals untouched); 13 chart types with deterministic recommendations and reasons; full chart editing; dashboards with drag, resize and keyboard control; export to PNG, SVG, CSV, JSON and (dashboards) PDF. See `docs/data.md`.
 
 ## Core visualisation engine (F2)
 Flowcharts, mind maps, concept maps and timelines, created from pasted text (rule-based, no AI) or by hand; full editing with undo/redo, keyboard shortcuts, format switching with a change preview, and PNG / SVG / editable JSON export. See `docs/engine.md` for the rules, limits and IR conventions.
@@ -57,6 +60,6 @@ Text colours, ochre-on-tint, semantic colours and form-control borders (3:1) are
 
 ## Known gaps (honest status)
 - Visual verification in a real browser was **not performed** (browser tooling unavailable); UI behaviour is covered by jsdom tests and a production build only. Please click through once: create project → diagram → add nodes → refresh → import CSV chart → export/import backup.
-- Dashboards, PDF export and AI-assisted generation do not exist. `table` exists in the IR but has no renderer and is not creatable.
+- AI-assisted generation does not exist; `.xls` import and PDF export of single charts/diagrams do not either. `table` exists in the IR but has no renderer and is not creatable.
 - Mind maps and timelines position themselves; you rearrange a mind map via the Inspector ("Move under…", move up/down) rather than by dragging.
 - Visualisation list queries load full records (summaries are denormalised in `meta`, but IndexedDB still reads whole values). Split into a separate documents store if datasets get large.

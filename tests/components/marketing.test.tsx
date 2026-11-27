@@ -119,10 +119,9 @@ describe("pricing honesty", () => {
 });
 
 describe("no misleading claims", () => {
-  it("exactly what is built is marked available; dashboards are still planned", () => {
+  it("exactly what is built is marked available", () => {
     const available = [...CAPABILITIES, ...WORKSPACE_FEATURES].filter((c) => c.status === "available").map((c) => c.id).sort();
-    expect(available).toEqual(["charts", "conceptmaps", "diagrams", "editing", "exporting", "generation", "mindmaps", "timelines"]);
-    expect(CAPABILITIES.find((c) => c.id === "dashboards")!.status).toBe("planned");
+    expect(available).toEqual(["charts", "conceptmaps", "dashboards", "diagrams", "editing", "exporting", "generation", "mindmaps", "timelines"]);
   });
   it("never claims AI: generation is described as rule-based and AI stays under 'not built'", () => {
     const gen = WORKSPACE_FEATURES.find((c) => c.id === "generation")!;
@@ -130,8 +129,17 @@ describe("no misleading claims", () => {
     expect(gen.today.join(" ")).toMatch(/never invents/);
     expect(gen.next.join(" ")).toMatch(/AI-assisted.*planned for Pro; not built/);
   });
-  it("PDF export and dashboards are not claimed anywhere as working", () => {
-    for (const c of [...CAPABILITIES, ...WORKSPACE_FEATURES]) for (const line of c.today) expect(line).not.toMatch(/PDF|dashboard/i);
+  it("things that do not exist are not claimed as working", () => {
+    const claimed = [...CAPABILITIES, ...WORKSPACE_FEATURES].flatMap((c) => c.today).join("\n");
+    expect(claimed).not.toMatch(/\bAI\b|\.xls\b|combination chart|dashboard-wide|live data|real-time|cloud/i);
+    // PDF is only claimed for dashboards, which is the only place it exists.
+    for (const line of claimed.split("\n").filter((l) => /PDF/.test(l))) expect(line).toMatch(/dashboard/i);
+  });
+  it("what is still missing is listed as 'not built'", () => {
+    const next = CAPABILITIES.find((c) => c.id === "charts")!.next.join(" ");
+    expect(next).toMatch(/bars and lines/);
+    expect(next).toMatch(/\.xls/);
+    expect(CAPABILITIES.find((c) => c.id === "dashboards")!.next.join(" ")).toMatch(/Dashboard-wide filters/);
   });
   it("every capability and use case separates what works today from what is not built", () => {
     for (const c of [...CAPABILITIES, ...WORKSPACE_FEATURES]) expect(AVAILABILITY_LABEL[c.status]).toBeTruthy();

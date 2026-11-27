@@ -7,6 +7,7 @@ import type { ColorKey } from "@/lib/engine/semantics";
  */
 export const EXPORT_THEME = {
   paper: "#ffffff",
+  desk: "#fcfaf3",
   ink: "#353335",
   body: "#4d4a4d",
   muted: "#6b6b6b",

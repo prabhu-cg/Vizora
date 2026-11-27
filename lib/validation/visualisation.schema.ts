@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Bump together with a new entry in lib/visualisation/migrations.ts. */
-export const CURRENT_VISUALISATION_SCHEMA_VERSION = 2;
+export const CURRENT_VISUALISATION_SCHEMA_VERSION = 3;
 
 const isoDate = z.iso.datetime();
 const id = z.string().min(1).max(128);
@@ -14,6 +14,7 @@ export const VISUALISATION_TYPES = [
   "conceptmap",
   "timeline",
   "chart",
+  "dashboard",
   "table",
 ] as const;
 export const visualisationTypeSchema = z.enum(VISUALISATION_TYPES);
@@ -24,6 +25,8 @@ export const sourceSchema = z.strictObject({
   mimeType: z.string().max(120).optional(),
   size: z.number().int().nonnegative().optional(),
   importedAt: isoDate.optional(),
+  /** SHA-256 of the original file bytes, so it can be shown that the file was read, never changed. */
+  sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
 });
 
 export const nodeSchema = z.strictObject({
@@ -56,6 +59,7 @@ export const columnSchema = z.strictObject({
 export const datasetSchema = z.strictObject({
   id,
   name: z.string().min(1).max(200),
+  origin: z.enum(["import", "paste", "manual"]).optional(),
   columns: z.array(columnSchema).max(500),
   rows: z.array(z.record(z.string(), cellSchema)).max(200_000),
 });

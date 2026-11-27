@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/cn";
 
 export const metadata = pageMetadata({
   title: "Features",
-  description: "What Vizora can do today: flowcharts, mind maps, concept maps, timelines and charts, editing, autosave, PNG, SVG and JSON export. Dashboards and AI are planned.",
+  description: "What Vizora can do today: diagrams, 13 chart types, dashboards, Excel/CSV/JSON import, editing, autosave and PNG, SVG, CSV, PDF and JSON export. AI is planned.",
   path: MARKETING_ROUTES.features.path,
 });
 
@@ -107,7 +107,8 @@ function EditingPanel({ id }: { id: string }) {
           ["Safe in two tabs", "Vizora asks which version to keep rather than overwriting."],
         ]
       : [
-          ["PNG and SVG", "Images that keep your colours, shapes and labels."],
+          ["PNG, SVG and PDF", "Images (and a dashboard PDF) that keep your colours, shapes and labels."],
+          ["CSV", "The data behind a chart, or the dataset itself."],
           ["Vizora JSON", "A lossless, editable copy of one visualisation."],
           ["Full backup", "All projects in one file, restorable without overwriting."],
         ];

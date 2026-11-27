@@ -14,6 +14,16 @@ import { DEFAULT_LAYOUT, DEFAULT_VIEWPORT } from "./defaults";
  * schema, add `steps[oldVersion]`, and add a fixture test.
  */
 const steps: Record<number, MigrationStep> = {
+  // v2 → v3: charts gained a full configuration (`options.chart`) and "dashboard" was added.
+  // The old single `chartKind` becomes the chart's kind; everything else is derived automatically.
+  2: (doc) => {
+    if (doc.type !== "chart") return doc;
+    const cfg = (doc.configuration ?? { options: {} }) as { options?: Record<string, unknown> };
+    const { chartKind, ...rest } = cfg.options ?? {};
+    const kind = chartKind === "line" ? "line" : chartKind === "bar" ? "bar" : undefined;
+    return { ...doc, configuration: { ...cfg, options: kind && !rest.chart ? { ...rest, chart: { kind } } : rest } };
+  },
+
   // v1 → v2: "diagram" became "flowchart" (with explicit node kinds); "conceptmap" and the
   // "linear" layout were added. Diagram nodes of kind "default" are process steps.
   1: (doc) => {

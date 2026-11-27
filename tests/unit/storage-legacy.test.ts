@@ -42,7 +42,7 @@ describe("data written by earlier builds", () => {
   it("opens migrated to the current schema, without having been rewritten", async () => {
     const s = await seed();
     const rec = (await s.visualisations.get("legacy-1"))!;
-    expect(rec.document).toMatchObject({ schemaVersion: 2, type: "flowchart" });
+    expect(rec.document).toMatchObject({ schemaVersion: 3, type: "flowchart" });
     expect(rec.document.nodes.map((n) => n.type)).toEqual(["process", "process"]);
     expect(rec.revision).toBe(3); // untouched until the user edits
   });
@@ -56,7 +56,7 @@ describe("data written by earlier builds", () => {
   it("is included in backups, which now carry the current schema", async () => {
     const s = await seed();
     const backup = await s.backup.export();
-    expect(backup.visualisations[0]!.document).toMatchObject({ schemaVersion: 2, type: "flowchart" });
+    expect(backup.visualisations[0]!.document).toMatchObject({ schemaVersion: 3, type: "flowchart" });
   });
   it("duplicates cleanly", async () => {
     const s = await seed();

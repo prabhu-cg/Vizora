@@ -6,3 +6,5 @@ export * from "./download";
 export { renderDiagramSvg } from "./svg";
 export { svgToPng } from "./png";
 export { slugify } from "./slug";
+export * from "./data-exporters";
+export { svgToPdf, createPdfExporter } from "./pdf";

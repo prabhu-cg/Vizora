@@ -59,9 +59,21 @@ describe("schema migrations", () => {
       layout: { algorithm: "manual", direction: "TB", spacing: { x: 80, y: 80 } },
       viewport: { x: 0, y: 0, zoom: 1 }, createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z",
     });
-    expect(parseVisualisation(v1("diagram", "default"))).toMatchObject({ schemaVersion: 2, type: "flowchart", nodes: [{ type: "process" }] });
+    expect(parseVisualisation(v1("diagram", "default"))).toMatchObject({ schemaVersion: 3, type: "flowchart", nodes: [{ type: "process" }] });
     expect(parseVisualisation(v1("diagram", "input")).nodes[0]!.type).toBe("io");
     expect(parseVisualisation(v1("chart", "default"))).toMatchObject({ type: "chart", nodes: [{ type: "default" }] });
+  });
+
+  it("v2 → v3: a chart's old chartKind becomes its configuration; other types are untouched", () => {
+    const v2 = (type: string, options: Record<string, unknown>) => ({
+      id: "c", schemaVersion: 2, title: "T", description: "", type, source: { kind: "csv" }, nodes: [], edges: [],
+      data: { datasets: [] }, configuration: { options },
+      layout: { algorithm: "manual", direction: "TB", spacing: { x: 80, y: 80 } }, viewport: { x: 0, y: 0, zoom: 1 },
+      createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    expect(parseVisualisation(v2("chart", { chartKind: "line" })).configuration.options).toEqual({ chart: { kind: "line" } });
+    expect(parseVisualisation(v2("chart", {})).configuration.options).toEqual({});
+    expect(parseVisualisation(v2("flowchart", { inputText: "x" })).configuration.options).toEqual({ inputText: "x" });
   });
 
   it("is idempotent for current documents", () => {
