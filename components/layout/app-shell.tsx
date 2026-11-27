@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useId, useState, type ReactNode } from "react";
 import { Logo } from "@/components/brand/logo";
+import { TAGLINE } from "@/lib/site";
 import { Button } from "@/components/ui/button";
 import { StorageGate } from "@/hooks/use-storage";
 import { NavLinks } from "./nav-links";
@@ -20,7 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden border-r border-border bg-surface lg:flex lg:flex-col" aria-label="Sidebar">
         <div className="flex h-16 items-center px-6">
           <Link href="/app/dashboard" aria-label="Vizora dashboard" className="rounded-sm">
-            <Logo />
+            <Logo tagline={TAGLINE} />
           </Link>
         </div>
         <div className="flex-1 px-4 py-2">

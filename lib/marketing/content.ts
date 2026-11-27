@@ -211,7 +211,7 @@ export const USE_CASES: UseCase[] = [
     visual: "chart",
     intro: "Get from a spreadsheet export to a readable chart quickly.",
     example: "Import an Excel export of monthly sales, accept the recommended line chart, add a second chart for sales by region, and export the dashboard as a PDF.",
-    today: ["Import Excel, CSV, JSON or pasted data, with profiling and type checks", "Thirteen chart types with a recommendation and the reason for it", "Filters, aggregation, sorting and underlying-data inspection", "Dashboards exported as PNG, SVG or PDF", "Data is read in your browser and never uploaded"],
+    today: ["Import Excel, CSV, JSON or pasted data, with profiling and type checks", "Thirteen chart types with a recommendation and the reason for it", "Filters, aggregation, sorting and underlying-data inspection", "Dashboards exported as PNG, SVG or PDF", "Files are read and processed in your browser; Vizora has no upload feature"],
     next: ["Charts that combine bars and lines", "Dashboard-wide filters"],
   },
   {
@@ -244,7 +244,7 @@ export const USE_CASES: UseCase[] = [
 ];
 
 export const STEPS = [
-  { title: "Bring your information", body: "Paste or describe steps, an outline, dated events or relationships; import a CSV or JSON file; or start from a blank canvas. Nothing is uploaded." },
+  { title: "Bring your information", body: "Paste or describe steps, an outline, dated events or relationships; import a CSV or JSON file; or start from a blank canvas. Vizora has no upload feature." },
   { title: "Choose a visualisation", body: "Vizora suggests a flowchart, mind map, concept map or timeline from your text, or you pick one. Numbers become a chart." },
   { title: "Explore, edit and export", body: "Refine it by hand, undo and redo freely, let autosave look after it, and export a PNG, SVG or editable JSON file." },
 ] as const;
@@ -270,7 +270,7 @@ export const AUDIENCES = [
 export const FREE_PROMISES = [
   { title: "No subscription required", body: "The Free edition is free, with no trial clock and no card." },
   { title: "No AI key required", body: "Nothing in Vizora needs an AI service or API key." },
-  { title: "Local-first storage", body: "Projects live in your browser on your device, not on our servers." },
+  { title: "Local-first storage", body: "Projects live in your browser on your device. Vizora has no cloud backup, and nothing is stored on our servers." },
   { title: "Useful from the start", body: "Flowcharts, mind maps, concept maps, timelines, thirteen chart types and dashboards, with undo, autosave, Excel, CSV and JSON import, projects, and backup and restore." },
   { title: "Export your work", body: "PNG, SVG, CSV and PDF, editable JSON per visualisation, static embed code for any web page, and one-file backups." },
 ];
@@ -355,7 +355,7 @@ export const FAQS: Faq[] = [
   { q: "What can I visualise?", a: "You can create flowcharts, mind maps, concept maps and timelines from pasted or typed content, or build them by hand. You can turn Excel, CSV, JSON or pasted tables into charts (thirteen types) and combine charts into dashboards." },
   { q: "Can I edit generated diagrams?", a: "Yes. Everything Vizora generates opens in the same editor as something you built yourself: change text, add or remove items, reconnect, restyle, undo and redo. You can also edit your source text and generate again." },
   { q: "How well does it understand my text?", a: "It understands visible structure: numbered or bulleted steps, “if … otherwise …”, outlines, dates and statements like “A depends on B”. It does not understand arbitrary prose. When something is ambiguous or cannot be read, it tells you and leaves it for you to fix; it never invents steps, dates or relationships. A bare request such as “create a flowchart for onboarding” produces an empty flowchart, because there is nothing to structure." },
-  { q: "Can I upload data?", a: "Yes. You can import CSV, TSV, JSON and Excel (.xlsx) files, paste data copied from a spreadsheet, or type it in. Files are read in your browser and are not uploaded anywhere, and your original file is never changed. Files up to 25 MB are accepted, older .xls files are not, and Vizora tells you clearly if a file cannot be read." },
+  { q: "Can I upload data?", a: "Yes. You can import CSV, TSV, JSON and Excel (.xlsx) files, paste data copied from a spreadsheet, or type it in. Files are read and processed in your browser; Vizora has no upload feature and does not send them anywhere, and your original file is never changed. Files up to 25 MB are accepted, older .xls files are not, and Vizora tells you clearly if a file cannot be read." },
   { q: "Where are my projects stored?", a: "In your browser, using IndexedDB on your own device. They are not stored on Vizora's servers. Clearing your browser's site data can remove them, so download a backup from Settings regularly." },
   { q: "Can I export my visualisations?", a: "Yes. Export a PNG or SVG image that keeps your colours, shapes and labels, the data behind a chart as CSV, a whole dashboard as a one-page PDF, an editable Vizora JSON file, or a backup of everything. You can also copy embed code to paste a static picture into any web page; it does not update when you change the visualisation." },
   { q: "Is my data sent to external services?", a: "Your projects, pasted text and imported files are not sent anywhere; they stay in your browser. The website is delivered by a hosting provider that sees standard request information, as any website does. The Privacy policy explains this in detail." },

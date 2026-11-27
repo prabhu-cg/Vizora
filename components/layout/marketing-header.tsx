@@ -29,8 +29,7 @@ export function MarketingFooter() {
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto grid max-w-[var(--container-marketing)] gap-10 px-4 py-12 sm:px-8 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div>
-          <Logo />
-          <p className="mt-3 max-w-xs text-sm text-muted-foreground">{TAGLINE}</p>
+          <Logo tagline={TAGLINE} />
         </div>
         {FOOTER_COLUMNS.map((col) => (
           <nav key={col.title} aria-label={col.title}>
@@ -48,7 +47,7 @@ export function MarketingFooter() {
         ))}
       </div>
       <div className="border-t border-border">
-        <p className="mx-auto max-w-[var(--container-marketing)] px-4 py-5 text-xs text-muted-foreground sm:px-8">
+        <p className="mx-auto max-w-[var(--container-marketing)] px-4 py-5 text-center text-xs text-muted-foreground sm:px-8">
           © {new Date().getFullYear()} Vizora. Free edition. Your projects stay in your browser.
         </p>
       </div>

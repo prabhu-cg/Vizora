@@ -45,7 +45,7 @@ export function DataPanel({ document: doc, onChange, addOpen, onAddOpenChange }:
     <section aria-labelledby={`${id}-h`} className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4">
       <div>
         <h3 id={`${id}-h`} className="text-[15px] font-semibold">Data</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">Read in your browser and never uploaded. Your original files are never changed.</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">Read and processed in your browser. Your original files are never changed.</p>
       </div>
 
       {canImport && (

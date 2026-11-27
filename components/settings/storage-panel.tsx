@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRequiredStorage } from "@/hooks/use-storage";
 import { describeBackup, downloadFullBackup } from "@/lib/library/backup-actions";
+import { SUPPORT_NOTES, detectSupport, type BrowserSupport } from "@/lib/compat";
 import { errorMessage, notify } from "@/lib/notify";
 import type { StorageStats } from "@/types/data";
 
@@ -151,6 +152,8 @@ export function StoragePanel() {
         )}
         {browser === "unsupported" && <p className="text-sm text-muted-foreground">This browser does not report how much space the site is using.</p>}
 
+        <BrowserSupportList />
+
         <div className="flex flex-wrap gap-2 border-t border-border pt-4">
           <Button onClick={backup} disabled={backingUp || empty}>
             {backingUp ? <Spinner /> : <Download aria-hidden="true" />} Download backup
@@ -213,5 +216,26 @@ function ClearDataDialog({ open, onOpenChange, stats, onBackup }: { open: boolea
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/** Lists only what this browser cannot do, each with what to do instead. Silent when everything works. */
+function BrowserSupportList() {
+  const [support, setSupport] = useState<BrowserSupport>();
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSupport(detectSupport());
+  }, []);
+  const missing = support ? (Object.keys(SUPPORT_NOTES) as (keyof BrowserSupport)[]).filter((k) => !support[k]) : [];
+  if (missing.length === 0) return null;
+  return (
+    <div role="group" aria-label="Browser limitations" className="grid gap-1.5 rounded-input bg-warning-soft p-3 text-sm text-warning">
+      <p className="font-semibold">This browser has some limits</p>
+      <ul className="grid gap-1">
+        {missing.map((k) => (
+          <li key={k}><strong>{SUPPORT_NOTES[k].label}:</strong> {SUPPORT_NOTES[k].without}</li>
+        ))}
+      </ul>
+    </div>
   );
 }

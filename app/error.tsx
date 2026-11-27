@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { ErrorState } from "@/components/shared/error-state";
 import { Button } from "@/components/ui/button";
+import { reportError } from "@/lib/logging";
 
 export default function RouteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    console.error(error);
+    reportError(error, "route error", { digest: error.digest });
   }, [error]);
   return (
     <main id="main" className="mx-auto grid min-h-dvh max-w-xl place-items-center p-6">

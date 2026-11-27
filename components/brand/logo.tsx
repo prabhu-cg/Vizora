@@ -27,11 +27,20 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ className, showWordmark = true }: { className?: string; showWordmark?: boolean }) {
+/**
+ * The mark and wordmark. With `tagline`, the line sits directly beneath the
+ * wordmark (not beneath the whole lockup), left-aligned with the "V".
+ */
+export function Logo({ className, showWordmark = true, tagline }: { className?: string; showWordmark?: boolean; tagline?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <LogoMark />
-      {showWordmark && <span className="font-display text-2xl leading-none text-foreground">Vizora</span>}
+      <LogoMark className={tagline ? "h-9" : undefined} />
+      {showWordmark && (
+        <span className="grid">
+          <span className="font-display text-2xl leading-none text-foreground">Vizora</span>
+          {tagline && <span className="mt-1 text-[11px] leading-none tracking-wide text-muted-foreground">{tagline}</span>}
+        </span>
+      )}
     </span>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { reportError } from "@/lib/logging";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ErrorState } from "./error-state";
 
@@ -20,7 +21,7 @@ export class ErrorBoundary extends Component<Props, { error: Error | null }> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("ErrorBoundary caught", error, info.componentStack);
+    reportError(error, `component boundary${info.componentStack ? ` in ${info.componentStack.trim().split("\n")[0]}` : ""}`);
   }
 
   override componentDidUpdate(prev: Props) {

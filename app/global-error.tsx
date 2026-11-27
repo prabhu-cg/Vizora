@@ -1,7 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
+import { reportError } from "@/lib/logging";
+
 /** Last-resort boundary: replaces the root layout, so it must render its own <html>. */
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    reportError(error, "root layout error", { digest: error.digest });
+  }, [error]);
   return (
     <html lang="en">
       <body style={{ fontFamily: "system-ui, sans-serif", background: "#F7F8FA", color: "#111827", margin: 0 }}>

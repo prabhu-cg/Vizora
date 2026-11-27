@@ -22,7 +22,7 @@ export default function PrivacyPage() {
           <li>Your theme preference (light or dark).</li>
         </ul>
         <p>
-          Files you import are read by your browser and are not uploaded to Vizora or to any other service. Because this data lives in your browser, clearing
+          Files you import are read and processed by your browser. Vizora has no upload feature and its pages make no requests to other services. Vizora keeps no copy and provides no cloud backup, and no AI service is used or required. Because this data lives in your browser, clearing
           your browser’s site data will remove it. You can download a backup from Settings at any time.
         </p>
       </LegalSection>

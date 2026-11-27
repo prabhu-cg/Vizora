@@ -6,3 +6,5 @@ export * from "./read";
 export * from "./build";
 export * from "./table";
 export * from "./doc-ops";
+export * from "./ingest-core";
+export * from "./ingest-client";

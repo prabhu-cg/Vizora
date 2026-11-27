@@ -22,6 +22,9 @@ Scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `test`, `test:watch`, `fo
 
 Notes: all user data lives in the visitor's browser (IndexedDB); the only server code is `/api/health`. Security headers are set in `next.config.ts`.
 
+## Release (F5)
+See `docs/deployment.md` (environment, deploy, security headers, logging, rollback) and `docs/qa.md` (what is verified by tests, what still needs a person in a real browser, and a manual checklist). Run `npm run verify` before every release.
+
 ## Workspace and project management (F4)
 Dashboard with recent projects and visualisations, search across both, sorting (remembered), recently-modified markers, project create/edit/duplicate/delete. Project pages with created/updated dates, contents, per-project search and sort, rename, duplicate, move to another project, reorder (accessible up/down controls), per-visualisation export and delete with confirmation. Workspace panels collapse (remembered), full-screen canvas (`F`; `[` and `]` toggle panels). Backups: whole library or a single project; import validates and previews first, lists what already exists, and offers keep-both or skip, never overwriting. Settings shows counts, approximate size and browser quota, and clearing all data needs a typed confirmation. Data is local to the browser; nothing is backed up unless you download a backup.
 

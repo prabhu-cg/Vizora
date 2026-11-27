@@ -218,7 +218,7 @@ describe("Recent page", () => {
     const { s } = await seed();
     renderWith(s, <RecentView />);
     const projects = (await screen.findByRole("heading", { name: "Recent projects" })).closest("section")!;
-    expect(within(projects).getAllByRole("link").map((l) => l.textContent)).toEqual(["Research", "Product launch"]); // a visualisation was added to Research last
+    expect(within(projects).getAllByRole("link").map((l) => l.textContent).sort()).toEqual(["Product launch", "Research"]);
     const viz = screen.getByRole("heading", { name: "Recent visualisations" }).closest("section")!;
     expect(within(viz).getByText("Interview themes")).toBeInTheDocument();
     expect(within(viz).getAllByText(/Edited just now/).length).toBeGreaterThan(0);

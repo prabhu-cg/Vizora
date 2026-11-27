@@ -144,6 +144,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
       )}
       {items.status === "ready" && total > 0 && (
         <>
+          <h2 className="sr-only">Visualisations in this project</h2>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <SearchBox value={query} onChange={setQuery} label="Search this project" placeholder="Search this project" />
             <SortSelect label="Sort" value={sort} onChange={setSort} options={VISUALISATION_SORTS} />

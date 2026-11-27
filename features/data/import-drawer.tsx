@@ -1,7 +1,7 @@
 "use client";
 
 import { FileUp } from "lucide-react";
-import { useDeferredValue, useId, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Spinner } from "@/components/shared/loading-state";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader } from "@/components/ui/drawer";
@@ -9,8 +9,8 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEntitlements } from "@/features/entitlements/client";
 import {
-  ACCEPT_ATTRIBUTE, IngestError, buildDataset, datasetFromGrid, emptyGrid, readFile, readText, sheetToTable,
-  type ColumnType, type FileRead, type IngestPreview, type RawTable, type SourceInfo,
+  ACCEPT_ATTRIBUTE, IngestError, buildDataset, createIngestClient, datasetFromGrid, emptyGrid, readText,
+  type ColumnType, type IngestClient, type IngestPreview, type RawTable, type ReadSummary, type SourceInfo,
 } from "@/lib/data";
 import { errorMessage } from "@/lib/notify";
 import { cn } from "@/lib/utils/cn";
@@ -37,7 +37,7 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
   const entitlements = useEntitlements();
   const modes = ([["file", "Upload a file", true], ["paste", "Paste data", entitlements.can("data.import.paste")], ["manual", "Type it in", entitlements.can("data.manual")]] as const).filter((m) => m[2]);
   const [mode, setMode] = useState<Mode>("file");
-  const [read, setRead] = useState<FileRead>();
+  const [read, setRead] = useState<ReadSummary>();
   const [sheet, setSheet] = useState<string>();
   const [fileError, setFileError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -48,6 +48,12 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
   const [name, setName] = useState("");
   const [grid, setGrid] = useState(() => emptyGrid(3, 6));
   const input = useRef<HTMLInputElement>(null);
+  // Files are read and analysed off the page (in a Web Worker where available) so a big workbook never freezes the drawer.
+  const client = useRef<IngestClient>(undefined);
+  const getClient = () => (client.current ??= createIngestClient());
+  useEffect(() => () => { client.current?.dispose(); client.current = undefined; }, []);
+  const [fileBuilt, setFileBuilt] = useState<{ preview?: IngestPreview; error?: string }>({});
+  const [analysing, setAnalysing] = useState(false);
   const deferredText = useDeferredValue(text);
 
   const onFile = async (file: File | undefined) => {
@@ -55,10 +61,9 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
     setBusy(true);
     setFileError(undefined);
     try {
-      await new Promise((r) => requestAnimationFrame(() => r(null))); // let "Reading…" paint before the heavy work
-      const r = await readFile(file);
+      const r = await getClient().read(file);
       setRead(r);
-      setSheet(r.raw.sheet);
+      setSheet(r.sheet);
       setTypes({});
       setName((r.source.name ?? "Dataset").replace(/\.[^.]+$/, ""));
     } catch (e) {
@@ -73,15 +78,27 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
   // Everything below is derived, so the preview always matches the options on screen.
   const raw: { table?: RawTable; error?: string } = useMemo(() => {
     try {
-      if (mode === "file") return read ? { table: read.workbook ? sheetToTable(read.workbook, sheet) : read.raw } : { error: fileError };
+      if (mode === "file") return { error: fileError };
       if (mode === "paste") return deferredText.trim() ? { table: readText(deferredText, { paste: true }) } : {};
     } catch (e) {
       return { error: errorMessage(e) };
     }
     return {};
-  }, [mode, read, sheet, fileError, deferredText]);
+  }, [mode, fileError, deferredText]);
 
-  const built: { preview?: IngestPreview; error?: string } = useMemo(() => {
+  useEffect(() => {
+    if (mode !== "file" || !read) return;
+    let current = true; // the newest request wins; older answers are ignored
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAnalysing(true);
+    getClient().build({ sheet, header, types, removeDuplicates: dedupe, name: "Dataset" }).then(
+      (preview) => current && setFileBuilt({ preview }),
+      (e: unknown) => current && setFileBuilt({ error: e instanceof IngestError ? e.message : errorMessage(e) }),
+    ).finally(() => current && setAnalysing(false));
+    return () => { current = false; };
+  }, [mode, read, sheet, header, types, dedupe]);
+
+  const pasted: { preview?: IngestPreview; error?: string } = useMemo(() => {
     if (!raw.table) return { error: raw.error };
     try {
       return { preview: buildDataset(raw.table, { header, types, removeDuplicates: dedupe, name: "Dataset" }) };
@@ -89,6 +106,7 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
       return { error: e instanceof IngestError ? e.message : errorMessage(e) };
     }
   }, [raw, header, types, dedupe]);
+  const built = mode === "file" ? (read ? fileBuilt : { error: undefined }) : pasted;
 
   const manual = useMemo(() => (mode === "manual" ? datasetFromGrid(grid, { name: name || "Manual data" }) : undefined), [mode, grid, name]);
   const manualProfile = useMemo(() => (manual ? profileDataset(manual) : undefined), [manual]);
@@ -99,11 +117,11 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
     if (built.preview) onAdd({ ...built.preview.dataset, name: name || (mode === "paste" ? "Pasted data" : "Dataset") }, mode === "file" ? read?.source : { format: "paste", size: text.length, name: "Pasted data" });
   };
   const hasDupes = (built.preview?.profile.duplicateRows ?? 0) > 0 || (built.preview?.duplicatesRemoved ?? 0) > 0;
-  const sheets = raw.table?.sheets;
+  const sheets = mode === "file" ? read?.sheet !== undefined || read?.sheets ? read?.sheets : undefined : raw.table?.sheets;
 
   return (
     <>
-      <DrawerHeader title="Add data" description="Files are read in your browser and never uploaded. The original file is never changed." />
+      <DrawerHeader title="Add data" description="Files are read and processed in your browser, and the original file is never changed." />
       <DrawerBody className="grid content-start gap-6">
         <fieldset className="grid gap-2">
           <legend className="mb-1 text-sm font-medium text-foreground">Source</legend>
@@ -122,10 +140,11 @@ function Body({ onAdd, onCancel }: { onAdd: (d: Dataset, s?: SourceInfo) => void
             <input ref={input} id={`${id}-file`} type="file" accept={ACCEPT_ATTRIBUTE} className="sr-only" onChange={(e) => void onFile(e.target.files?.[0])} disabled={busy} />
             <div>
               <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}>
-                {busy ? <Spinner /> : <FileUp aria-hidden="true" />} {busy ? "Reading and analysing…" : read ? "Choose a different file" : "Choose a file"}
+                {busy ? <Spinner /> : <FileUp aria-hidden="true" />} {busy ? "Reading file…" : read ? "Choose a different file" : "Choose a file"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">CSV, TSV, JSON or Excel (.xlsx), up to 25 MB.</p>
+            {analysing && <p className="text-sm text-muted-foreground" role="status"><Spinner className="mr-2" /> Analysing the data{read?.source.size && read.source.size > 500_000 ? ". Large files can take a few seconds" : ""}…</p>}
             {read && <p className="text-sm text-body" role="status">Read <strong>{read.source.name}</strong> ({(read.source.size / 1024).toFixed(read.source.size > 10240 ? 0 : 1)} KB){read.source.sha256 ? <> · checksum <code className="font-mono text-xs">{read.source.sha256.slice(0, 12)}…</code></> : null}</p>}
             {fileError && <p role="alert" className="rounded-input bg-destructive-soft p-3 text-sm text-destructive">{fileError}</p>}
           </div>

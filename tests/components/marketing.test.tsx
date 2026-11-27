@@ -194,9 +194,9 @@ describe("structured data", () => {
 });
 
 describe("legal pages", () => {
-  it("state accurately that nothing is uploaded and no analytics are used", () => {
+  it("state accurately that there is no upload feature and no analytics are used", () => {
     render(<PrivacyPage />);
-    expect(screen.getByText(/not uploaded to Vizora/)).toBeInTheDocument();
+    expect(screen.getByText(/Vizora has no upload feature/)).toBeInTheDocument();
     expect(screen.getByText(/does not currently use analytics/)).toBeInTheDocument();
     expect(screen.queryByText(/mailto/)).toBeNull();
   });
