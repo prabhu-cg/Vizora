@@ -465,3 +465,109 @@ describe("Canvas context menu", () => {
     expect(await rightClickPane()).toHaveClass("vz-menu");
   });
 });
+
+describe("Swimlanes in the editor", () => {
+  const LANES = "1. Place order [Customer]\n2. Check stock [Warehouse]\n3. Pack the items [Warehouse]";
+  const inspector = (initial: VisualisationIR) => {
+    let captured!: Api;
+    render(
+      <Harness initial={initial}>
+        {(api) => {
+          captured = api;
+          return (
+            <>
+              <Inspector doc={api.doc} session={api.session} update={api.update} fallback={<p>Nothing selected</p>} />
+              <div style={{ width: 900, height: 700 }}><EngineCanvas /></div>
+            </>
+          );
+        }}
+      </Harness>,
+    );
+    return () => captured;
+  };
+  const laneNames = () => JSON.parse(screen.getByTestId("doc").textContent!).nodes.map((n: { data: { lane?: string } }) => n.data.lane);
+
+  it("a flowchart without lanes offers to add them, and adding them draws the bands", async () => {
+    inspector(make(FLOW, "flowchart"));
+    await userEvent.click(await screen.findByRole("button", { name: /Add swimlanes/ }));
+    expect(await screen.findByRole("list", { name: "Lanes, top to bottom" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Lane 1 name")).toHaveValue("Lane 1");
+    expect(screen.getByLabelText("Lane 2 name")).toHaveValue("Lane 2");
+    expect(document.querySelectorAll(".react-flow__node-lane")).toHaveLength(2);
+    expect(laneNames().every((l: string) => l === "Lane 1")).toBe(true);
+  });
+
+  it("a lane tag in the text produces named bands behind the steps", async () => {
+    inspector(make(LANES, "flowchart"));
+    await screen.findByText("Place order");
+    const bands = [...document.querySelectorAll(".react-flow__node-lane")];
+    expect(bands.map((b) => b.textContent)).toEqual(["Customer", "Warehouse"]);
+    expect(bands.every((b) => b.getAttribute("aria-hidden") !== "false")).toBe(true);
+  });
+
+  it("rename, reorder and remove a lane from the panel", async () => {
+    inspector(make(LANES, "flowchart"));
+    const field = await screen.findByLabelText("Lane 2 name");
+    await userEvent.clear(field);
+    await userEvent.type(field, "Stock room{Enter}");
+    await waitFor(() => expect(laneNames()).toContain("Stock room"));
+    await userEvent.click(screen.getByRole("button", { name: "Move lane Stock room up" }));
+    await waitFor(() => expect([...document.querySelectorAll(".react-flow__node-lane")].map((b) => b.textContent)).toEqual(["Stock room", "Customer"]));
+    await userEvent.click(screen.getByRole("button", { name: "Remove lane Stock room" }));
+    await waitFor(() => expect(document.querySelectorAll(".react-flow__node-lane")).toHaveLength(1));
+    expect(laneNames().every((l: string) => l === "Customer")).toBe(true);
+  });
+
+  it("adds a lane from the form, and refuses a blank one", async () => {
+    inspector(make(LANES, "flowchart"));
+    const add = await screen.findByRole("button", { name: "Add" });
+    expect(add).toBeDisabled();
+    await userEvent.type(screen.getByLabelText("Add a lane"), "Courier");
+    await userEvent.click(add);
+    await waitFor(() => expect(document.querySelectorAll(".react-flow__node-lane")).toHaveLength(3));
+    expect(screen.getByLabelText("Add a lane")).toHaveValue("");
+  });
+
+  it("removing swimlanes puts the flowchart back as it was", async () => {
+    inspector(make(LANES, "flowchart"));
+    await userEvent.click(await screen.findByRole("button", { name: "Remove swimlanes" }));
+    await waitFor(() => expect(document.querySelectorAll(".react-flow__node-lane")).toHaveLength(0));
+    expect(await screen.findByRole("button", { name: /Add swimlanes/ })).toBeInTheDocument();
+  });
+
+  it("a selected step shows its lane and can change it", async () => {
+    const get = inspector(make(LANES, "flowchart"));
+    await screen.findByText("Place order");
+    act(() => get().session.setSelection({ nodes: [get().doc.nodes.find((n) => n.label === "Place order")!.id], edges: [] }));
+    const select = await screen.findByLabelText("Swimlane");
+    expect(select).toHaveValue("Customer");
+    await userEvent.selectOptions(select, "Warehouse");
+    // Start, Place order, Check stock, Pack the items, End: Place order joins the three already in Warehouse.
+    await waitFor(() => expect(laneNames().filter((l: string) => l === "Warehouse")).toHaveLength(4));
+  });
+
+  it("right-clicking a step offers Move to lane, with its own lane disabled", async () => {
+    inspector(make(LANES, "flowchart"));
+    fireEvent.contextMenu((await screen.findByText("Check stock")).closest(".react-flow__node")!);
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByText("Move to lane")).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Warehouse" })).toHaveAttribute("data-disabled");
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Customer" }));
+    await waitFor(() => expect(laneNames().filter((l: string) => l === "Customer")).toHaveLength(3)); // Start, Place order and now Check stock
+  });
+
+  it("a flowchart without lanes has no Move to lane entry", async () => {
+    inspector(make(FLOW, "flowchart"));
+    fireEvent.contextMenu((await screen.findByText("Sign up")).closest(".react-flow__node")!);
+    expect(within(await screen.findByRole("menu")).queryByText("Move to lane")).toBeNull();
+  });
+
+  it("lane bands cannot be selected, edited or right-clicked as if they were steps", async () => {
+    inspector(make(LANES, "flowchart"));
+    await screen.findByText("Place order");
+    const band = document.querySelector(".react-flow__node-lane") as HTMLElement;
+    fireEvent.doubleClick(band);
+    expect(document.querySelector("textarea")).toBeNull();
+    expect(band).not.toHaveClass("selected");
+  });
+});

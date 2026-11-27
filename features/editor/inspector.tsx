@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowDown, ArrowLeftRight, ArrowUp, ChevronDown, ChevronRight, Copy, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeftRight, ArrowUp, ChevronDown, ChevronRight, Copy, Plus, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  COLOR_KEYS, COLOR_LABEL, COLOR_VAR, NODE_KINDS, canDelete, canMoveEvent, connect, deleteEdges, getColor, getExtras, mindTree, moveEvent, moveSibling, reparent,
+  COLOR_KEYS, COLOR_LABEL, COLOR_VAR, MAX_LANES, NODE_KINDS, addLane, assignLane, canDelete, moveLane, readLanes, removeLane, renameLane, setLanes, canMoveEvent, connect, deleteEdges, getColor, getExtras, mindTree, moveEvent, moveSibling, reparent,
   reparentTargets, reverseEdge, setStyle, toggleCollapse, updateEdge, updateNode,
   type ColorKey,
 } from "@/lib/engine";
@@ -197,6 +197,14 @@ function NodeForm({ node, doc, update, session }: { node: IRNode; doc: Visualisa
         </Field>
       )}
 
+      {type === "flowchart" && readLanes(doc).length > 0 && (
+        <Field label="Swimlane" htmlFor={`${id}-lane`} hint="Who or what does this step. Dragging a step into another lane does the same.">
+          <Select id={`${id}-lane`} value={ex.lane && readLanes(doc).includes(ex.lane) ? ex.lane : readLanes(doc)[0]} onChange={(e) => update((d) => assignLane(d, [node.id], e.target.value))}>
+            {readLanes(doc).map((l) => <option key={l} value={l}>{l}</option>)}
+          </Select>
+        </Field>
+      )}
+
       <ColourPicker value={getColor(node)} onChange={(c) => update((d) => setStyle(d, [node.id], c))} />
 
       {type === "timeline" && (
@@ -277,6 +285,64 @@ function EdgeForm({ edge, doc, update, session }: { edge: IREdge; doc: Visualisa
 }
 
 /** Edit whatever is selected. Everything the canvas can do with a pointer can be done here with a keyboard. */
+function LaneRow({ name, index, count, update }: { name: string; index: number; count: number; update: Update }) {
+  const id = useId();
+  const [draft, setDraft] = useState(name);
+  const [seen, setSeen] = useState(name);
+  if (seen !== name) {
+    setSeen(name);
+    setDraft(name);
+  }
+  const commit = () => {
+    const next = draft.trim();
+    if (!next) return setDraft(name);
+    if (next !== name) update((d) => renameLane(d, name, next));
+  };
+  return (
+    <li className="flex items-center gap-1">
+      <Label htmlFor={id} className="sr-only">Lane {index + 1} name</Label>
+      <Input id={id} value={draft} maxLength={60} className="h-9 min-w-0 flex-1" onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit())} />
+      <Button variant="ghost" size="icon" className="size-8" aria-label={`Move lane ${name} up`} disabled={index === 0} onClick={() => update((d) => moveLane(d, name, -1))}><ArrowUp aria-hidden="true" /></Button>
+      <Button variant="ghost" size="icon" className="size-8" aria-label={`Move lane ${name} down`} disabled={index === count - 1} onClick={() => update((d) => moveLane(d, name, 1))}><ArrowDown aria-hidden="true" /></Button>
+      <Button variant="ghost" size="icon" className="size-8" aria-label={`Remove lane ${name}`} onClick={() => update((d) => removeLane(d, name))}><Trash2 aria-hidden="true" /></Button>
+    </li>
+  );
+}
+
+/** Swimlanes for a flowchart: switch them on, name them, reorder them. Each step then says who does it. */
+export function LanesPanel({ doc, update }: { doc: VisualisationIR; update: Update }) {
+  const id = useId();
+  const lanes = readLanes(doc);
+  const [name, setName] = useState("");
+  if (doc.type !== "flowchart") return null;
+  if (lanes.length === 0) {
+    return (
+      <section aria-label="Swimlanes" className="grid gap-2 border-b border-border p-4">
+        <H>Swimlanes</H>
+        <p className="text-xs text-muted-foreground">Divide the flowchart into lanes for people, teams or systems, so it shows who does each step. You can also end a line in the Source panel with a lane name in brackets, such as [Customer].</p>
+        <div><Button variant="outline" size="sm" onClick={() => update((d) => setLanes(d, ["Lane 1", "Lane 2"]))}><Plus aria-hidden="true" /> Add swimlanes</Button></div>
+      </section>
+    );
+  }
+  return (
+    <section aria-label="Swimlanes" className="grid gap-3 border-b border-border p-4">
+      <H>Swimlanes</H>
+      <ul className="grid gap-1.5" aria-label="Lanes, top to bottom">
+        {lanes.map((l, i) => <LaneRow key={l} name={l} index={i} count={lanes.length} update={update} />)}
+      </ul>
+      <form className="flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (name.trim()) { update((d) => addLane(d, name)); setName(""); } }}>
+        <div className="grid min-w-0 flex-1 gap-1.5">
+          <Label htmlFor={`${id}-new`}>Add a lane</Label>
+          <Input id={`${id}-new`} value={name} maxLength={60} className="h-9" placeholder="For example, Support" disabled={lanes.length >= MAX_LANES} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <Button type="submit" variant="outline" size="sm" disabled={!name.trim() || lanes.length >= MAX_LANES}>Add</Button>
+      </form>
+      <p className="text-xs text-muted-foreground">Drag a step into another lane to change who does it. Lanes grow to fit their steps.</p>
+      <div><Button variant="ghost" size="sm" onClick={() => update((d) => setLanes(d, []))}>Remove swimlanes</Button></div>
+    </section>
+  );
+}
+
 export function Inspector({ doc, session, update, fallback }: { doc: VisualisationIR; session: EditorSession; update: Update; fallback: React.ReactNode }) {
   const { nodes, edges } = session.selection;
   const node = nodes.length === 1 && edges.length === 0 ? doc.nodes.find((n) => n.id === nodes[0]) : undefined;
@@ -311,7 +377,12 @@ export function Inspector({ doc, session, update, fallback }: { doc: Visualisati
       </section>
     );
   }
-  return <>{fallback}</>;
+  return (
+    <>
+      {doc.type === "flowchart" && <LanesPanel doc={doc} update={update} />}
+      {fallback}
+    </>
+  );
 }
 
 void cn;

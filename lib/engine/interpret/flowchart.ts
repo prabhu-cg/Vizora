@@ -1,3 +1,4 @@
+import { uniqueNames } from "../lanes";
 import { canon, capitalise, cleanLabel, similarity, stripDeterminer } from "../text";
 import { GraphBuilder } from "./graph-builder";
 import { splitSentences, type Line } from "./lines";
@@ -49,7 +50,18 @@ interface Tail {
   label?: string;
 }
 
-export function interpretFlowchart(lines: readonly Line[], title: string): { graph: SemanticGraph; warnings: Warning[] } {
+const LANE_TAG = /\s*\[([^\]\n]{1,60})\]\s*$/;
+
+export function interpretFlowchart(inputLines: readonly Line[], title: string): { graph: SemanticGraph; warnings: Warning[] } {
+  // A trailing [Name] puts that line's steps in a swimlane, as dates and [Team] work on timelines.
+  const laneByLine = new Map<number, string>();
+  const lines: Line[] = inputLines.map((l) => {
+    const m = LANE_TAG.exec(l.text);
+    const name = m?.[1]?.replace(/\s+/g, " ").trim();
+    if (!m || !name) return l;
+    laneByLine.set(l.line, name);
+    return { ...l, text: l.text.slice(0, m.index).trim() };
+  });
   const g = new GraphBuilder();
   const segs = segmentLines(lines);
   const byCanon = new Map<string, string>();
@@ -127,6 +139,7 @@ export function interpretFlowchart(lines: readonly Line[], title: string): { gra
   for (let i = 0; i < segs.length; i++) {
     const seg = segs[i]!;
     const text = seg.text;
+    g.lane = laneByLine.get(seg.line);
 
     if (seg.yesno) {
       if (!pendingDecision) {
@@ -185,6 +198,7 @@ export function interpretFlowchart(lines: readonly Line[], title: string): { gra
     }
   }
   closeDecisionWithoutOutcomes();
+  g.lane = undefined; // steps added from here on (Start, End) are structural: they take the lane of their neighbour below
   // A decision left open at the end: both answers fall through.
 
   function wireDecision(id: string, b: { yes?: string; no?: string }, line: number) {
@@ -242,5 +256,23 @@ export function interpretFlowchart(lines: readonly Line[], title: string): { gra
   for (const o of orphans) g.warn("unreachable", `“${o.label}” is not reached from the start. Connect it in the editor.`, undefined);
 
   void stripDeterminer;
-  return { graph: g.graph("flowchart", title, { algorithm: "layered", direction: "TB" }), warnings: g.warnings };
+  g.lane = undefined;
+
+  // Swimlanes need at least two lanes to mean anything. Start and End join the lane of the step beside them.
+  const lanes = uniqueNames(laneByLine.values());
+  if (lanes.length === 1) {
+    g.warn("one-lane", `Only one lane (“${lanes[0]}”) was named, so swimlanes were not drawn. Name at least two, for example [Customer] and [Support].`, undefined, "info");
+    for (const i of g.items) delete i.lane;
+  } else if (lanes.length >= 2) {
+    for (const i of g.items) {
+      if (!i.lane && i.structural) {
+        const next = i.kind === "start" ? g.links.find((l) => l.from === i.id)?.to : g.links.find((l) => l.to === i.id)?.from;
+        const lane = next ? g.get(next)?.lane : undefined;
+        if (lane) i.lane = lane;
+      }
+    }
+    for (const i of g.items) if (!i.lane) i.lane = lanes[0];
+  }
+  const graph = g.graph("flowchart", title, { algorithm: "layered", direction: lanes.length >= 2 ? "LR" : "TB" });
+  return { graph: lanes.length >= 2 ? { ...graph, lanes } : graph, warnings: g.warnings };
 }

@@ -22,7 +22,7 @@ export function renderChartSvg(dataset: Dataset, config: ChartConfig, size: { wi
   const { width, height } = size;
   const chart = echarts.init(null, null, { renderer: "svg", ssr: true, width, height });
   try {
-    chart.setOption({ ...buildEChartsOption(result.data, config, FALLBACK_CHART_THEME, { decal: false, animate: false }), backgroundColor: FALLBACK_CHART_THEME.surface });
+    chart.setOption({ ...buildEChartsOption(result.data, config, FALLBACK_CHART_THEME, { decal: false, animate: false, size: { width, height } }), backgroundColor: FALLBACK_CHART_THEME.surface });
     return { svg: chart.renderToSVGString(), width, height };
   } finally {
     chart.dispose();

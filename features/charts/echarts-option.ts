@@ -8,6 +8,8 @@ export interface OptionFlags {
   /** Accessibility hatch patterns on screen; off in exported images. */
   decal?: boolean;
   animate?: boolean;
+  /** Pixel size of the drawing area. Number tiles size their text from it. */
+  size?: { width: number; height: number };
 }
 
 const CARTESIAN = new Set(["bar", "hbar", "line", "area", "stacked-bar", "grouped-bar", "multi-line", "histogram", "stacked-100", "combo"]);
@@ -118,6 +120,46 @@ export function buildEChartsOption(data: ChartData, config: ChartConfig, theme: 
     };
   }
 
+  // ── Number tile ───────────────────────────────────────────────────────────
+  if (kind === "kpi" && data.kpi) return kpiOption(data, config, theme, flags);
+
+  // ── Gantt ─────────────────────────────────────────────────────────────────
+  if (kind === "gantt" && data.gantt) {
+    const g = data.gantt;
+    const groups = g.groups.length ? g.groups : [data.yLabel || "Tasks"];
+    const colours = colourFor(groups, config, theme);
+    const pad = Math.max(864e5, (g.max - g.min) * 0.03);
+    const day = 864e5;
+    const fmt = (t: number) => new Date(t).toISOString().slice(0, 10);
+    const rowsOf = (group?: string) => g.tasks.map((t, i) => ({ t, i })).filter(({ t }) => !group || (t.group ?? "") === group);
+    const many = groups.length > 1;
+    return {
+      ...common,
+      color: colours,
+      tooltip: { show: config.tooltips, trigger: "item", confine: true, formatter: (p: { data: { value: (string | number)[] } }) => { const [, s, e, name] = p.data.value as [number, number, number, string]; return `${name}<br/>${fmt(s)} to ${fmt(e)} (${Math.max(1, Math.round((e - s) / day) + 1)} days)`; } },
+      legend: legendBase(many ? groups : []),
+      grid: { ...grid, left: Math.max(grid.left, 12) + 8, bottom: grid.bottom + 8 },
+      xAxis: { type: "time", min: g.min - pad, max: g.max + pad, name: "", axisLine, splitLine: split, axisLabel: { hideOverlap: true, color: theme.text } },
+      yAxis: { type: "category", data: data.categories.map((n) => (n.length > 28 ? `${n.slice(0, 27)}…` : n)), inverse: true, axisLine, axisTick: { show: false }, splitLine: { show: true, lineStyle: { color: theme.grid, type: "dashed" } }, axisLabel: { color: theme.text, hideOverlap: false } },
+      series: groups.map((name, gi) => ({
+        name,
+        type: "custom",
+        itemStyle: { color: colours[gi] },
+        encode: { x: [1, 2], y: 0 },
+        data: rowsOf(many ? name : undefined).map(({ t, i }) => ({ value: [i, t.start, t.end, t.name] })),
+        renderItem: (params: { coordSys: { x: number; y: number; width: number; height: number } }, api: { value: (n: number) => number; coord: (v: number[]) => number[]; size: (v: number[]) => number[]; style: () => Record<string, unknown> }) => {
+          const row = api.value(0);
+          const a = api.coord([api.value(1), row]), b = api.coord([api.value(2) + day, row]);
+          const h = Math.max(6, api.size([0, 1])[1]! * 0.6);
+          const cs = params.coordSys;
+          const x = Math.max(cs.x, a[0]!), x2 = Math.min(cs.x + cs.width, b[0]!);
+          if (x2 <= x) return undefined;
+          return { type: "rect", shape: { x, y: a[1]! - h / 2, width: Math.max(3, x2 - x), height: h, r: 4 }, style: api.style() };
+        },
+      })),
+    };
+  }
+
   // ── Funnel ────────────────────────────────────────────────────────────────
   if (kind === "funnel") {
     const s = data.series[0];
@@ -200,5 +242,36 @@ export function buildEChartsOption(data: ChartData, config: ChartConfig, theme: 
     xAxis: horizontal ? (share ? { ...value, max: 100, axisLabel: { color: theme.text, formatter: "{value}%" } } : value) : category,
     yAxis: horizontal ? category : yAxis,
     series,
+  };
+}
+
+/** Compact figure for a tile: 1,234 → "1.2K", 3,400,000 → "3.4M"; small numbers keep their detail. */
+export function formatFigure(v: number | null, prefix = "", suffix = ""): string {
+  if (v === null || !Number.isFinite(v)) return "–";
+  const abs = Math.abs(v);
+  const body = abs >= 10000 ? new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(v) : new Intl.NumberFormat("en", { maximumFractionDigits: abs >= 100 ? 0 : 2 }).format(v);
+  return `${prefix}${body}${suffix}`;
+}
+
+function kpiOption(data: ChartData, config: ChartConfig, theme: ChartTheme, flags: OptionFlags): EChartsOption {
+  const k = data.kpi!;
+  const { width: w, height: h } = flags.size ?? { width: 320, height: 180 };
+  const value = formatFigure(k.value, config.prefix, config.suffix);
+  const label = config.title || k.label;
+  // Size the figure to fit: limited by width (about 0.6em per character) and by height.
+  const fig = Math.round(Math.min(120, Math.max(24, Math.min((w * 0.86) / Math.max(2, value.length * 0.62), h * 0.42))));
+  const small = Math.round(Math.min(18, Math.max(12, h * 0.085)));
+  const change = k.change;
+  const delta = change === undefined ? (k.period ? "No comparison available" : "") : `${change >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(change * 1000) / 10)}% vs ${k.previousPeriod}`;
+  const deltaColour = change === undefined ? theme.muted : change >= 0 ? theme.positive : theme.negative;
+  const font = (size: number, weight: number) => `${weight} ${size}px system-ui, sans-serif` // no quotes: ECharts writes this into an SVG attribute unescaped;
+  const blockH = small + 8 + fig + (delta ? 10 + small : 0);
+  const top = Math.max(4, (h - blockH) / 2);
+  const text = (t: string, y: number, size: number, weight: number, fill: string) => ({ type: "text", left: "center", top: y, style: { text: t, fill, font: font(size, weight), textAlign: "center" } });
+  return {
+    animation: false,
+    aria: { enabled: true, label: { enabled: true, description: `${label}: ${value}${delta ? `, ${delta}` : ""}` } },
+    textStyle: { fontFamily: "inherit", color: theme.text },
+    graphic: { elements: [text(label, top, small, 500, theme.muted), text(value, top + small + 8, fig, 600, theme.text), ...(delta ? [text(delta, top + small + 18 + fig, small, 600, deltaColour)] : [])] },
   };
 }

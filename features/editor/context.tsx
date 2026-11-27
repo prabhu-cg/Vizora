@@ -31,6 +31,8 @@ export interface EditorContextValue {
   duplicateSelection: () => void;
   removeSelection: () => void;
   selectAll: () => void;
+  /** Swimlanes: move the selected steps to a lane. */
+  assignLane: (lane: string) => void;
 }
 
 const Ctx = createContext<EditorContextValue | null>(null);

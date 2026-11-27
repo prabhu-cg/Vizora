@@ -5,10 +5,12 @@ export class GraphBuilder {
   items: SemanticItem[] = [];
   links: SemanticLink[] = [];
   warnings: Warning[] = [];
+  /** Stamped on every item added while set (the swimlane of the line being read). */
+  lane?: string;
   private seq = 0;
 
   add(item: Omit<SemanticItem, "id">): SemanticItem {
-    const full = { id: `n${++this.seq}`, ...item };
+    const full = { id: `n${++this.seq}`, ...(this.lane && !item.lane ? { lane: this.lane } : {}), ...item };
     this.items.push(full);
     return full;
   }

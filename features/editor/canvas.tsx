@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { COLOR_VAR, getColor } from "@/lib/engine/semantics";
 import { CanvasMenu, type MenuTarget } from "./canvas-menu";
-import { AXIS_ID, toFlow } from "./flow-adapter";
+import { isDecoration, toFlow } from "./flow-adapter";
 import { useEditor } from "./context";
 import { NODE_TYPES } from "./nodes";
 
@@ -63,7 +63,7 @@ export function EngineCanvas() {
         if (c.type === "position" && c.dragging && c.position) {
           const { id, position } = c;
           setDrag((prev) => ({ ...prev, [id]: position }));
-        } else if (c.type === "select" && c.id !== AXIS_ID) {
+        } else if (c.type === "select" && !isDecoration(c.id)) {
           touchedSelection = true;
           nodes = c.selected ? (nodes.includes(c.id) ? nodes : [...nodes, c.id]) : nodes.filter((id) => id !== c.id);
         }
@@ -112,7 +112,7 @@ export function EngineCanvas() {
   const onPaneContextMenu = useCallback((e: MouseEvent | React.MouseEvent) => setMenu({ kind: "pane", position: rf.screenToFlowPosition({ x: e.clientX, y: e.clientY }) }), [rf]);
   const onNodeContextMenu = useCallback(
     (_: unknown, n: Node) => {
-      if (n.id === AXIS_ID) return;
+      if (isDecoration(n.id)) return;
       if (!selection.nodes.includes(n.id)) ed.setSelection({ nodes: [n.id], edges: [] });
       setMenu({ kind: "node", id: n.id });
     },
@@ -144,7 +144,7 @@ export function EngineCanvas() {
         onPaneContextMenu={onPaneContextMenu}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
-        onNodeDoubleClick={(_, n) => n.id !== AXIS_ID && ed.startEdit(n.id)}
+        onNodeDoubleClick={(_, n) => !isDecoration(n.id) && ed.startEdit(n.id)}
         defaultViewport={doc.viewport}
         connectionMode={ConnectionMode.Loose}
         nodesDraggable={interactive}

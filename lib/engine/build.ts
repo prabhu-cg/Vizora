@@ -16,6 +16,7 @@ export function itemToNode(item: SemanticItem): IRNode {
     dateLabel: item.dateLabel,
     collapsed: item.collapsed,
     structural: item.structural,
+    lane: item.lane,
   });
   return item.color ? withColor(node, item.color) : node;
 }
@@ -39,6 +40,8 @@ export function graphToDocument(graph: SemanticGraph, base?: VisualisationIR): V
     edges,
     layout: { ...defaults, algorithm: hint.algorithm ?? defaults.algorithm, direction: hint.direction ?? defaults.direction },
     viewport: { x: 0, y: 0, zoom: 1 },
+    // Regenerating replaces the lanes too: they come from the text, so removing the tags removes the lanes.
+    configuration: { options: (({ lanes: _old, ...rest }) => (void _old, graph.lanes?.length ? { ...rest, lanes: graph.lanes } : rest))(seed.configuration.options as Record<string, unknown>) as VisualisationIR["configuration"]["options"] },
   });
 }
 

@@ -22,7 +22,7 @@ Local-first and deterministic. No server, no paid API, no AI.
 - **Limits:** 25 MB, 200,000 rows, 500 columns; over 50,000 rows warns that saving may be slower.
 
 ## Chart configuration (`options.chart`, validated by `chartConfigSchema`)
-`kind` (17), `lines`/`secondaryAxis` (bar and line), `datasetId`, `x`, `y[]`, `series`, `aggregation` (sum/avg/count/min/max), `timeBucket`, `title`, `subtitle`, axis labels, `legend`, `dataLabels`, `tooltips`, `sort`, `limit`/`groupOthers`, `filters[]`, `palette` + per-series `colors`, `smooth`, `bins`. Dashboards store `options.dashboard.widgets[]`, each with a chart config and a position on a 12-column grid.
+`kind` (19), `prefix`/`suffix` (number tile), `lines`/`secondaryAxis` (bar and line), `datasetId`, `x`, `y[]`, `series`, `aggregation` (sum/avg/count/min/max), `timeBucket`, `title`, `subtitle`, axis labels, `legend`, `dataLabels`, `tooltips`, `sort`, `limit`/`groupOthers`, `filters[]`, `palette` + per-series `colors`, `smooth`, `bins`. Dashboards store `options.dashboard.widgets[]`, each with a chart config and a position on a 12-column grid.
 
 ## Recommendation rules (in priority order)
 1. You chose columns → respect them (date X → line; numeric X and Y → scatter; only X → counts; only a numeric Y → histogram; a Series → stacked bar).

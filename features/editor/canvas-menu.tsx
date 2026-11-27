@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronsDownUp, ChevronsUpDown, Copy, CornerDownRight, Maximize2, MousePointerClick, Pencil, Plus, Trash2, Unlink } from "lucide-react";
+import { ArrowRightLeft, ChevronsDownUp, ChevronsUpDown, Copy, CornerDownRight, Maximize2, MousePointerClick, Pencil, Plus, Trash2, Unlink } from "lucide-react";
 import { ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator } from "@/components/ui/context-menu";
 import { canDelete, NODE_KINDS } from "@/lib/engine";
+import { laneIndexOf, readLanes } from "@/lib/engine/lanes";
 import { getExtras } from "@/lib/engine/semantics";
 import { mindTree } from "@/lib/engine/mindmap-tree";
 import { useEditor } from "./context";
@@ -82,6 +83,7 @@ export function CanvasMenu({ target, onFit }: { target: MenuTarget; onFit: () =>
   const hasChildren = Boolean(tree?.children.get(node.id)?.length);
   const collapsed = Boolean(getExtras(node).collapsed);
   const deletable = canDelete(doc, [node.id]);
+  const lanes = readLanes(doc);
   // After an "End" step nothing follows; "Start" never follows another step.
   const followers = type === "flowchart" ? (node.type === "end" ? [] : kinds.filter((k) => k.kind !== "start")) : [];
 
@@ -121,6 +123,17 @@ export function CanvasMenu({ target, onFit }: { target: MenuTarget; onFit: () =>
         <ContextMenuItem onSelect={() => ed.addItem({ from: node.id })}>
           <CornerDownRight aria-hidden="true" /> Add event after
         </ContextMenuItem>
+      )}
+      {lanes.length > 1 && (
+        <>
+          <ContextMenuSeparator />
+          <ContextMenuLabel>Move to lane</ContextMenuLabel>
+          {lanes.map((l, i) => (
+            <ContextMenuItem key={l} disabled={i === laneIndexOf(node, lanes)} onSelect={() => ed.assignLane(l)}>
+              <ArrowRightLeft aria-hidden="true" /> {l}
+            </ContextMenuItem>
+          ))}
+        </>
       )}
       <ContextMenuSeparator />
       <ContextMenuItem onSelect={() => ed.startEdit(node.id)}>

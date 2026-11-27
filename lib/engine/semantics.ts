@@ -86,6 +86,8 @@ export interface NodeExtras {
   collapsed?: boolean;
   /** True for nodes the interpreter added for structure (e.g. Start/End), not from the user's text. */
   structural?: boolean;
+  /** Flowchart swimlane this step belongs to (one of the document's lanes). */
+  lane?: string;
 }
 
 const str = (v: unknown): string | undefined => (typeof v === "string" && v !== "" ? v : undefined);
@@ -99,6 +101,7 @@ export function getExtras(node: IRNode): NodeExtras {
     dateLabel: str(d.dateLabel),
     collapsed: d.collapsed === true ? true : undefined,
     structural: d.structural === true ? true : undefined,
+    lane: str(d.lane),
   };
 }
 

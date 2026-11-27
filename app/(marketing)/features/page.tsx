@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/cn";
 
 export const metadata = pageMetadata({
   title: "Features",
-  description: "What Vizora does today: diagrams, 17 chart types, dashboards, data import, projects with backup, and PNG, SVG, PDF, JSON and embed export. AI is planned.",
+  description: "What Vizora does today: diagrams, 19 chart types, dashboards, data import, projects with backup, and PNG, SVG, PDF, JSON and embed export. AI is planned.",
   path: MARKETING_ROUTES.features.path,
 });
 

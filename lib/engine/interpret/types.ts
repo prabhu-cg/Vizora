@@ -12,6 +12,8 @@ export interface SemanticItem {
   color?: ColorKey;
   structural?: boolean;
   collapsed?: boolean;
+  /** Flowchart swimlane, from a trailing [Lane] on the line. */
+  lane?: string;
 }
 
 export interface SemanticLink {
@@ -26,6 +28,8 @@ export interface SemanticGraph {
   title: string;
   items: SemanticItem[];
   links: SemanticLink[];
+  /** Swimlanes in order of first appearance (flowcharts only). */
+  lanes?: string[];
   /** Layout preferences discovered while reading (e.g. relationships are mostly hierarchical). */
   layoutHint?: { algorithm?: "layered" | "force" | "tree" | "linear"; direction?: "TB" | "LR" };
 }

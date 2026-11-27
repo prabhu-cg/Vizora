@@ -17,6 +17,10 @@ export interface ChartData {
   tree?: TreeNode[];
   /** Box plot: five-number summary per group, plus the points beyond the whiskers. */
   box?: { stats: [number, number, number, number, number][]; counts: number[]; outliers: [number, number][] };
+  /** Number tile: the headline value and, with a date column, the change from the previous period. */
+  kpi?: { value: number | null; label: string; previous?: number | null; change?: number; period?: string; previousPeriod?: string };
+  /** Gantt: scheduled tasks, earliest first, and the groups used for colour. */
+  gantt?: { tasks: { name: string; start: number; end: number; group?: string }[]; groups: string[]; min: number; max: number };
   /** Suggested axis titles, used when the config does not set its own. */
   xLabel: string;
   yLabel: string;
@@ -41,7 +45,7 @@ const MAX_POINTS = 5000;
 /** The most categories each chart kind draws when no limit is set; beyond it the largest are kept, with a note. */
 export const CATEGORY_CAP: Record<ChartConfig["kind"], number> = {
   pie: 30, donut: 30, bar: 150, hbar: 60, "stacked-bar": 100, "grouped-bar": 100, line: 5000, area: 5000, "multi-line": 5000, treemap: 300, heatmap: 50, scatter: 5000, histogram: 5000,
-  "stacked-100": 100, combo: 100, boxplot: 30, funnel: 12,
+  "stacked-100": 100, combo: 100, boxplot: 30, funnel: 12, kpi: 1, gantt: 60,
 };
 const MAX_HEATMAP = 50;
 
@@ -221,6 +225,65 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
     return { ok: true, data: { ...base, categories: xs, series: [], matrix: { xs, ys, cells: out, min: Math.min(...values), max: Math.max(...values) }, xLabel: xCol.label, yLabel: serCol.label } };
   }
 
+  // ── Number tile ───────────────────────────────────────────────────────────
+  if (config.kind === "kpi") {
+    const yc = yCols[0];
+    if (agg !== "count" && (!yc || yc.type !== "number")) return fail("A number tile needs a numeric column to measure, or set the aggregation to Count.");
+    const aggregate = (rs: Row[]) => {
+      const a = new Acc();
+      for (const r of rs) a.add(yc ? num(r[yc.key] ?? null) : null);
+      return a.result(agg);
+    };
+    const label = measureLabel(config, yc);
+    if (!xCol) return { ok: true, data: { ...base, categories: [], series: [], kpi: { value: aggregate(rows), label }, xLabel: "", yLabel: label } };
+    if (xCol.type !== "date") return fail("Compare by needs a date column. Choose one, or clear it to show the overall figure.");
+    const by = config.timeBucket === "none" ? "month" : config.timeBucket;
+    const groups = new Map<string, Row[]>();
+    for (const r of rows) {
+      const k = bucket(r[xCol.key] ?? null, xCol, by);
+      if (k === BLANK) continue;
+      (groups.get(k) ?? groups.set(k, []).get(k)!).push(r);
+    }
+    const keys = orderKeys([...groups.keys()], xCol);
+    if (!keys.length) return fail("This date column has no dates to compare.");
+    const period = keys[keys.length - 1]!, previousPeriod = keys[keys.length - 2];
+    const value = aggregate(groups.get(period)!);
+    const previous = previousPeriod ? aggregate(groups.get(previousPeriod)!) : undefined;
+    const change = value !== null && previous !== undefined && previous !== null && previous !== 0 ? (value - previous) / Math.abs(previous) : undefined;
+    notes.push(previousPeriod ? `Latest ${by} is ${period}, compared with ${previousPeriod}.` : `Only one ${by} (${period}) is in the data, so there is nothing to compare it with.`);
+    return { ok: true, data: { ...base, categories: [], series: [], kpi: { value, label, previous, change, period, previousPeriod }, xLabel: xCol.label, yLabel: label } };
+  }
+
+  // ── Gantt ─────────────────────────────────────────────────────────────────
+  if (config.kind === "gantt") {
+    const [sc, ec] = yCols;
+    if (!xCol) return fail("Choose the column that names each task.");
+    if (!sc || !ec || sc.type !== "date" || ec.type !== "date") return fail("A Gantt chart needs a start date column and an end date column. Choose both under Start and End.");
+    const parse = (c: Cell) => {
+      const t = c === null || c === "" ? NaN : Date.parse(String(c));
+      return Number.isFinite(t) ? t : null;
+    };
+    let tasks: { name: string; start: number; end: number; group?: string }[] = [];
+    let missing = 0, backwards = 0;
+    for (const r of rows) {
+      const start = parse(r[sc.key] ?? null), end = parse(r[ec.key] ?? null);
+      if (start === null || end === null) { missing++; continue; }
+      if (end < start) { backwards++; continue; }
+      tasks.push({ name: String(r[xCol.key] ?? BLANK) || BLANK, start, end, group: serCol ? bucket(r[serCol.key] ?? null, serCol, "none") : undefined });
+    }
+    if (missing) notes.push(`${missing} row${missing === 1 ? " is" : "s are"} missing a start or end date and ${missing === 1 ? "is" : "are"} not shown.`);
+    if (backwards) notes.push(`${backwards} row${backwards === 1 ? " ends" : "s end"} before ${backwards === 1 ? "it starts" : "they start"} and ${backwards === 1 ? "is" : "are"} not shown.`);
+    if (!tasks.length) return fail("No rows have both a valid start and end date.");
+    tasks.sort((a, b) => a.start - b.start || a.end - b.end);
+    const cap = config.limit ?? CATEGORY_CAP.gantt;
+    if (tasks.length > cap) {
+      notes.push(config.limit ? `Showing the first ${cap} of ${tasks.length} tasks by start date.` : `Showing the first ${cap} of ${tasks.length.toLocaleString()} tasks by start date to keep the chart readable. Use a filter to narrow it.`);
+      tasks = tasks.slice(0, cap);
+    }
+    const groups = serCol ? [...new Set(tasks.map((t) => t.group!))] : [];
+    return { ok: true, data: { ...base, categories: tasks.map((t) => t.name), series: [], gantt: { tasks, groups, min: Math.min(...tasks.map((t) => t.start)), max: Math.max(...tasks.map((t) => t.end)) }, xLabel: xCol.label, yLabel: "" } };
+  }
+
   // ── Box plot ──────────────────────────────────────────────────────────────
   if (config.kind === "boxplot") {
     const yc = yCols[0];
@@ -374,6 +437,8 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
 /** The aggregated table behind a chart, as rows ready for display or CSV. */
 export function chartTable(d: ChartData): { headers: string[]; rows: (string | number | null)[][] } {
   if (d.points) return { headers: [d.xLabel, d.yLabel, ...(d.points.some((p) => p.series) ? ["Series"] : [])], rows: d.points.map((p) => [p.x, p.y, ...(d.points!.some((q) => q.series) ? [p.series ?? ""] : [])]) };
+  if (d.kpi) return { headers: ["Measure", "Value", ...(d.kpi.period ? ["Period", "Previous value", "Change (%)"] : [])], rows: [[d.kpi.label, d.kpi.value, ...(d.kpi.period ? [d.kpi.period, d.kpi.previous ?? null, d.kpi.change === undefined ? null : Math.round(d.kpi.change * 1000) / 10] : [])]] };
+  if (d.gantt) return { headers: ["Task", "Start", "End", "Days", ...(d.gantt.groups.length ? ["Group"] : [])], rows: d.gantt.tasks.map((t) => [t.name, new Date(t.start).toISOString().slice(0, 10), new Date(t.end).toISOString().slice(0, 10), Math.round((t.end - t.start) / 864e5), ...(d.gantt!.groups.length ? [t.group ?? ""] : [])]) };
   if (d.box) return { headers: [d.xLabel || "Group", "Minimum", "Lower quartile", "Median", "Upper quartile", "Maximum", "Rows"], rows: d.categories.map((c, i) => [c, ...d.box!.stats[i]!, d.box!.counts[i]!]) };
   if (d.matrix) {
     const { xs, ys, cells } = d.matrix;

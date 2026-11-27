@@ -29,7 +29,7 @@ See `docs/deployment.md` (environment, deploy, security headers, logging, rollba
 Dashboard with recent projects and visualisations, search across both, sorting (remembered), recently-modified markers, project create/edit/duplicate/delete. Project pages with created/updated dates, contents, per-project search and sort, rename, duplicate, move to another project, reorder (accessible up/down controls), per-visualisation export and delete with confirmation. Workspace panels collapse (remembered), full-screen canvas (`F`; `[` and `]` toggle panels). Backups: whole library or a single project; import validates and previews first, lists what already exists, and offers keep-both or skip, never overwriting. Settings shows counts, approximate size and browser quota, and clearing all data needs a typed confirmation. Data is local to the browser; nothing is backed up unless you download a backup.
 
 ## Data visualisation engine (F3)
-Import Excel, CSV, TSV, JSON, pasted or typed data (all in the browser, originals untouched); 17 chart types with deterministic recommendations and reasons; full chart editing; dashboards with drag, resize and keyboard control; export to PNG, SVG, CSV, JSON and (dashboards) PDF. See `docs/data.md`.
+Import Excel, CSV, TSV, JSON, pasted or typed data (all in the browser, originals untouched); 19 chart types (including number tiles and a Gantt schedule) with deterministic recommendations and reasons; full chart editing; dashboards with drag, resize and keyboard control; export to PNG, SVG, CSV, JSON and (dashboards) PDF. See `docs/data.md`.
 
 ## Core visualisation engine (F2)
 Flowcharts, mind maps, concept maps and timelines, created from pasted text (rule-based, no AI) or by hand; full editing with undo/redo, keyboard shortcuts, format switching with a change preview, and PNG / SVG / editable JSON export. See `docs/engine.md` for the rules, limits and IR conventions.
@@ -63,6 +63,9 @@ hooks/ services/ tests/ docs/
 
 ## Accessibility notes
 Text colours, ochre-on-tint, semantic colours and form-control borders (3:1) are contrast-tested in both themes (`tests/unit/design-tokens.test.ts`). Amber is only ever a fill with charcoal text. Focus is a solid 2px ochre outline.
+
+## Number tiles, Gantt and swimlanes
+Number tiles and the Gantt schedule are chart kinds (`kpi`, `gantt`), so they import, filter, export and sit on dashboards like any chart; "Add number tile" on a dashboard starts one from the first real measure. A number tile compares the latest month or year with the one before. The Gantt chart takes a task column plus start and end date columns (optionally coloured by group); it has no task dependencies. Swimlanes divide a flowchart into lanes (see `docs/engine.md`).
 
 ## Embedding
 Export menu: **Copy embed code** (an inline-SVG `<figure>` with unique ids, fluid width, escaped caption, no scripts or external requests) and **HTML embed page**. These are static snapshots: they do not update and there is no hosted, interactive embed (that would require publishing a copy to a server).

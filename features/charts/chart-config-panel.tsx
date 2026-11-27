@@ -133,20 +133,34 @@ export function ChartConfigPanel({
             </Select>
           </Field>
         )}
-        <Field label={kind === "scatter" ? "X axis (numeric)" : kind === "histogram" ? "Column to count (numeric)" : kind === "pie" || kind === "donut" || kind === "treemap" ? "Categories" : kind === "funnel" ? "Stages" : kind === "boxplot" ? "Group by (optional)" : "X axis (categories)"} htmlFor={`${id}-x`}>
+        <Field label={kind === "scatter" ? "X axis (numeric)" : kind === "histogram" ? "Column to count (numeric)" : kind === "pie" || kind === "donut" || kind === "treemap" ? "Categories" : kind === "funnel" ? "Stages" : kind === "boxplot" ? "Group by (optional)" : kind === "kpi" ? "Compare by date (optional)" : kind === "gantt" ? "Task name" : "X axis (categories)"} htmlFor={`${id}-x`}>
           <Select id={`${id}-x`} value={config.x ?? ""} onChange={(e) => set("x", e.target.value || undefined, "chart:x")}>
-            <option value="">Choose a column</option>
-            {(numericX ? numeric : cols).map((c) => <option key={c.key} value={c.key}>{c.label} ({c.type})</option>)}
+            <option value="">{kind === "kpi" ? "None: show the overall figure" : "Choose a column"}</option>
+            {(numericX ? numeric : kind === "kpi" ? cols.filter((c) => c.type === "date") : cols).map((c) => <option key={c.key} value={c.key}>{c.label} ({c.type})</option>)}
           </Select>
         </Field>
 
-        {kind !== "histogram" && (
+        {kind === "gantt" && (
+          <>
+            {([["Start date", 0], ["End date", 1]] as const).map(([label, i]) => (
+              <Field key={label} label={label} htmlFor={`${id}-g${i}`}>
+                <Select id={`${id}-g${i}`} value={config.y[i] ?? ""} onChange={(e) => onChange((c) => { const y = [...c.y]; y[i] = e.target.value; return { ...c, y: y.filter((v, j) => v || j < i) }; }, "chart:y")}>
+                  <option value="">Choose a date column</option>
+                  {cols.filter((c) => c.type === "date").map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </Select>
+              </Field>
+            ))}
+            {cols.filter((c) => c.type === "date").length < 2 && <p className="text-xs text-muted-foreground">A Gantt chart needs two date columns, one for when each task starts and one for when it ends.</p>}
+          </>
+        )}
+
+        {kind !== "histogram" && kind !== "gantt" && (
           <fieldset className="grid gap-1">
             <legend className="mb-1 text-sm font-medium text-foreground">{kind === "scatter" ? "Y axis (numeric)" : "Measures (numbers to plot)"}</legend>
             {numeric.length === 0 && <p className="text-xs text-muted-foreground">This dataset has no numeric columns. Use Count, or change a column&apos;s type when importing.</p>}
             {numeric.map((c) => {
               const on = config.y.includes(c.key);
-              const single = kind === "scatter" || kind === "pie" || kind === "donut" || kind === "treemap" || kind === "heatmap" || kind === "funnel" || kind === "boxplot";
+              const single = kind === "scatter" || kind === "pie" || kind === "donut" || kind === "treemap" || kind === "heatmap" || kind === "funnel" || kind === "boxplot" || kind === "kpi";
               return (
                 <Check key={c.key} id={`${id}-y-${c.key}`} checked={on} onChange={(v) => onChange((cur) => ({ ...cur, y: single ? (v ? [c.key] : []) : v ? [...cur.y, c.key] : cur.y.filter((k) => k !== c.key) }), "chart:y")}>
                   {c.label}
@@ -172,8 +186,8 @@ export function ChartConfigPanel({
           </fieldset>
         )}
 
-        {kind !== "histogram" && kind !== "pie" && kind !== "donut" && kind !== "funnel" && kind !== "boxplot" && (
-          <Field label={kind === "heatmap" ? "Second axis (categories)" : "Series (split by)"} htmlFor={`${id}-s`} hint={kind === "heatmap" ? "Becomes the vertical axis." : "Optional. Splits the measure into one series per value."}>
+        {kind !== "histogram" && kind !== "pie" && kind !== "donut" && kind !== "funnel" && kind !== "boxplot" && kind !== "kpi" && (
+          <Field label={kind === "heatmap" ? "Second axis (categories)" : kind === "gantt" ? "Colour by (optional)" : "Series (split by)"} htmlFor={`${id}-s`} hint={kind === "heatmap" ? "Becomes the vertical axis." : kind === "gantt" ? "Tasks in the same group share a colour, such as a team or phase." : "Optional. Splits the measure into one series per value."}>
             <Select id={`${id}-s`} value={config.series ?? ""} onChange={(e) => set("series", e.target.value || undefined, "chart:series")}>
               <option value="">None</option>
               {cols.filter((c) => c.type !== "number" && c.key !== config.x).map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
@@ -181,19 +195,29 @@ export function ChartConfigPanel({
           </Field>
         )}
 
-        {kind !== "scatter" && kind !== "histogram" && kind !== "boxplot" && (
+        {kind !== "scatter" && kind !== "histogram" && kind !== "boxplot" && kind !== "gantt" && (
           <Field label="Aggregation" htmlFor={`${id}-a`} hint={config.aggregation === "count" ? "Counts rows in each group." : needsMeasure ? "How rows in the same group combine." : undefined}>
             <Select id={`${id}-a`} value={config.aggregation} onChange={(e) => set("aggregation", e.target.value as ChartConfig["aggregation"], "chart:agg")}>
               {AGGREGATIONS.map((a) => <option key={a} value={a}>{AGG_LABEL[a]}</option>)}
             </Select>
           </Field>
         )}
-        {xCol?.type === "date" && kind !== "scatter" && kind !== "histogram" && (
-          <Field label="Group dates by" htmlFor={`${id}-t`}>
+        {xCol?.type === "date" && kind !== "scatter" && kind !== "histogram" && kind !== "gantt" && (
+          <Field label={kind === "kpi" ? "Period to compare" : "Group dates by"} htmlFor={`${id}-t`}>
             <Select id={`${id}-t`} value={config.timeBucket} onChange={(e) => set("timeBucket", e.target.value as ChartConfig["timeBucket"], "chart:bucket")}>
               {TIME_BUCKETS.map((b) => <option key={b} value={b}>{b === "none" ? "Exact date" : b[0]!.toUpperCase() + b.slice(1)}</option>)}
             </Select>
           </Field>
+        )}
+        {kind === "kpi" && (
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Text before" htmlFor={`${id}-pre`} hint='For example "$"'>
+              <Input id={`${id}-pre`} value={config.prefix} maxLength={10} onChange={(e) => set("prefix", e.target.value)} />
+            </Field>
+            <Field label="Text after" htmlFor={`${id}-suf`} hint='For example "%" or " users"'>
+              <Input id={`${id}-suf`} value={config.suffix} maxLength={10} onChange={(e) => set("suffix", e.target.value)} />
+            </Field>
+          </div>
         )}
         {kind === "histogram" && (
           <Field label="Number of bins" htmlFor={`${id}-bins`} hint="Leave empty to choose automatically.">
@@ -203,13 +227,13 @@ export function ChartConfigPanel({
       </Section>
 
       <Section title="Titles and labels">
-        <Field label="Chart title" htmlFor={`${id}-title`}>
+        <Field label={kind === "kpi" ? "Label (leave empty to use the measure)" : "Chart title"} htmlFor={`${id}-title`}>
           <Input id={`${id}-title`} value={config.title} maxLength={200} onChange={(e) => set("title", e.target.value)} />
         </Field>
         <Field label="Subtitle" htmlFor={`${id}-sub`}>
           <Input id={`${id}-sub`} value={config.subtitle} maxLength={300} onChange={(e) => set("subtitle", e.target.value)} />
         </Field>
-        {kind !== "pie" && kind !== "donut" && kind !== "treemap" && (
+        {kind !== "pie" && kind !== "donut" && kind !== "treemap" && kind !== "kpi" && kind !== "funnel" && (
           <>
             <Field label="X axis label" htmlFor={`${id}-xl`} hint={data ? `Leave empty to use “${data.xLabel}”.` : undefined}>
               <Input id={`${id}-xl`} value={config.xLabel ?? ""} maxLength={100} onChange={(e) => set("xLabel", e.target.value || undefined, "chart:xLabel")} />
@@ -257,7 +281,7 @@ export function ChartConfigPanel({
         )}
       </Section>
 
-      {kind !== "scatter" && kind !== "histogram" && kind !== "heatmap" && (
+      {kind !== "scatter" && kind !== "histogram" && kind !== "heatmap" && kind !== "kpi" && kind !== "gantt" && (
         <Section title="Sorting and limits">
           <Field label="Sort by" htmlFor={`${id}-sb`}>
             <Select id={`${id}-sb`} value={config.sort.by} onChange={(e) => onChange((c) => ({ ...c, sort: { ...c.sort, by: e.target.value as ChartConfig["sort"]["by"] } }), "chart:sortBy")}>

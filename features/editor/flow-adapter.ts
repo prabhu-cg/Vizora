@@ -1,6 +1,6 @@
 import { MarkerType, type Edge, type Node } from "@xyflow/react";
 import { connectionSides, rectOf } from "@/lib/engine/edges";
-import { timelineGeometry } from "@/lib/engine";
+import { laneGeometry, timelineGeometry, withLanePositions } from "@/lib/engine";
 import { hiddenNodeIds } from "@/lib/engine/ops";
 import { mindTree } from "@/lib/engine/mindmap-tree";
 import { COLOR_VAR, getColor, isDirected, isEngineType } from "@/lib/engine/semantics";
@@ -21,7 +21,16 @@ export interface AxisData extends Record<string, unknown> {
   horizontal: boolean;
 }
 
+export interface LaneData extends Record<string, unknown> {
+  name: string;
+  index: number;
+  horizontal: boolean;
+}
+
 export const AXIS_ID = "__axis";
+export const LANE_PREFIX = "__lane:";
+/** Background decorations (the timeline axis, swimlane bands): drawn, never selected, edited or connected. */
+export const isDecoration = (id: string) => id === AXIS_ID || id.startsWith(LANE_PREFIX);
 
 const kindLabel = (n: { type: string; label: string }) => `${n.type}: ${n.label}`;
 
@@ -33,8 +42,11 @@ export function toFlow(
   doc: VisualisationIR,
   selection: Selection,
   overrides: Readonly<Record<string, { x: number; y: number }>> = {},
-): { nodes: Node<ItemData | AxisData>[]; edges: Edge[] } {
+): { nodes: Node<ItemData | AxisData | LaneData>[]; edges: Edge[] } {
   if (!isEngineType(doc.type)) return { nodes: [], edges: [] };
+  const lanes = laneGeometry(doc);
+  // With swimlanes a step's cross-axis position comes from its lane; only its place along the flow is its own.
+  if (lanes) doc = withLanePositions(doc);
   const hidden = hiddenNodeIds(doc);
   const selectedNodes = new Set(selection.nodes);
   const selectedEdges = new Set(selection.edges);
@@ -43,7 +55,25 @@ export function toFlow(
   const rootRect = tree?.rootId ? rectOf(tree.byId.get(tree.rootId)!) : undefined;
   const draggable = doc.type === "flowchart" || doc.type === "conceptmap";
 
-  const nodes: Node<ItemData | AxisData>[] = [];
+  const nodes: Node<ItemData | AxisData | LaneData>[] = [];
+  if (lanes) {
+    const length = lanes.along.end - lanes.along.start;
+    for (const b of lanes.bands) {
+      nodes.push({
+        id: `${LANE_PREFIX}${b.index}`,
+        type: "lane",
+        position: lanes.horizontal ? { x: lanes.along.start, y: b.start } : { x: b.start, y: lanes.along.start },
+        width: lanes.horizontal ? length : b.size,
+        height: lanes.horizontal ? b.size : length,
+        data: { name: b.name, index: b.index, horizontal: lanes.horizontal },
+        draggable: false,
+        selectable: false,
+        focusable: false,
+        connectable: false,
+        zIndex: -2,
+      });
+    }
+  }
   if (geo) {
     const horizontal = doc.layout.direction !== "TB" && doc.layout.direction !== "BT";
     const { x1, y1, x2, y2 } = geo.axis;

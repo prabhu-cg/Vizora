@@ -2,7 +2,7 @@ import { edgeGeometry, rectOf, type Rect } from "@/lib/engine/edges";
 import { hiddenNodeIds } from "@/lib/engine/ops";
 import { formatDateValue } from "@/lib/engine/interpret/dates";
 import { LINE_H, textColumns } from "@/lib/engine/layout/size";
-import { applyLayout, timelineGeometry } from "@/lib/engine";
+import { applyLayout, laneGeometry, timelineGeometry, withLanePositions } from "@/lib/engine";
 import { getColor, getExtras, isDirected, isEngineType } from "@/lib/engine/semantics";
 import { wrapText } from "@/lib/engine/text";
 import type { IRNode, VisualisationIR } from "@/types/visualisation";
@@ -151,7 +151,10 @@ export function renderDiagramSvg(input: VisualisationIR): SvgResult {
   if (!isEngineType(input.type)) throw new Error("This type is not drawn from nodes.");
   if (input.nodes.length === 0) throw new Error("There is nothing to export yet. Add something to the visualisation first.");
   // Make sure sizes exist even for documents that were never laid out in this session.
-  const doc = input.nodes.every((n) => n.size) ? input : applyLayout(input);
+  const sized = input.nodes.every((n) => n.size) ? input : applyLayout(input);
+  // With swimlanes, steps sit where their lane puts them, exactly as on screen.
+  const doc = withLanePositions(sized);
+  const lanes = laneGeometry(sized);
   const hidden = hiddenNodeIds(doc);
   const nodes = new Map(doc.nodes.map((n) => [n.id, n]));
 
@@ -165,7 +168,26 @@ export function renderDiagramSvg(input: VisualisationIR): SvgResult {
     const minX = Math.min(...rects.map((r) => r.x)), minY = Math.min(...rects.map((r) => r.y));
     const maxX = Math.max(...rects.map((r) => r.x + r.width)), maxY = Math.max(...rects.map((r) => r.y + r.height));
     bounds = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    let bands = "";
+    if (lanes) {
+      const a0 = lanes.along.start, len = lanes.along.end - lanes.along.start;
+      const last = lanes.bands[lanes.bands.length - 1]!;
+      bands = lanes.bands
+        .map((b) => {
+          const x = lanes.horizontal ? a0 : b.start, y = lanes.horizontal ? b.start : a0;
+          const w = lanes.horizontal ? len : b.size, h = lanes.horizontal ? b.size : len;
+          const fill = b.index % 2 === 0 ? T.desk : tint(T.hairline, 0.7);
+          const label = esc(b.name.length > 28 ? `${b.name.slice(0, 27)}…` : b.name);
+          return `<g data-lane="${esc(b.name)}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${T.hairline}"/><text x="${x + 12}" y="${y + 20}" font-size="12.5" font-weight="600" fill="${T.ink}">${label}</text></g>`;
+        })
+        .join("");
+      // The bands, not just the steps, decide how big the picture is.
+      const x0 = lanes.horizontal ? a0 : 0, y0 = lanes.horizontal ? 0 : a0;
+      const x1 = lanes.horizontal ? a0 + len : last.start + last.size, y1 = lanes.horizontal ? last.start + last.size : a0 + len;
+      bounds = { x: Math.min(minX, x0), y: Math.min(minY, y0), width: Math.max(maxX, x1) - Math.min(minX, x0), height: Math.max(maxY, y1) - Math.min(minY, y0) };
+    }
     body =
+      bands +
       drawEdges(doc, nodes, hidden) +
       visible.map((n) => `<g data-node="${esc(n.id)}">${shape(doc, n, rectOf(n))}</g>`).join("");
   }

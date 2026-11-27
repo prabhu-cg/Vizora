@@ -9,7 +9,7 @@ import { STEM } from "@/lib/engine/layout/timeline";
 import type { IRNode } from "@/types/visualisation";
 import { cn } from "@/lib/utils/cn";
 import { useEditor } from "./context";
-import type { AxisData, ItemData } from "./flow-adapter";
+import type { AxisData, ItemData, LaneData } from "./flow-adapter";
 
 const SIDES = [
   [Position.Top, "top"],
@@ -252,4 +252,17 @@ export function AxisNode({ data }: NodeProps) {
   );
 }
 
-export const NODE_TYPES = { item: ItemNode, axis: AxisNode };
+/** One swimlane band: a tinted strip with its name. Purely a backdrop; steps are drawn above it. */
+export function LaneNode({ data }: NodeProps) {
+  const d = data as LaneData;
+  return (
+    <div
+      aria-hidden="true"
+      className={cn("pointer-events-none size-full border-b border-r border-border-strong", d.index % 2 === 0 ? "bg-surface/80" : "bg-muted/60")}
+    >
+      <span className={cn("absolute left-3 top-2 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-card px-2.5 py-0.5 text-xs font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border-strong)]")}>{d.name}</span>
+    </div>
+  );
+}
+
+export const NODE_TYPES = { item: ItemNode, axis: AxisNode, lane: LaneNode };

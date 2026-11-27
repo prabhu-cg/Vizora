@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addNode, canDelete, deleteEdges, deleteNodes, duplicateNodes, moveNodes, connect, toggleCollapse, updateNode } from "@/lib/engine";
+import { addNode, assignLane, canDelete, deleteEdges, deleteNodes, duplicateNodes, moveNodes, connect, toggleCollapse, updateNode } from "@/lib/engine";
 import { mindTree } from "@/lib/engine/mindmap-tree";
 import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import type { IRViewport, VisualisationIR } from "@/types/visualisation";
@@ -109,6 +109,7 @@ export function useEditorSession(doc: VisualisationIR, update: Update) {
     duplicateSelection: duplicate,
     removeSelection: remove,
     selectAll,
+    assignLane: (lane) => update((d) => assignLane(d, selRef.current.nodes, lane)),
     moveNodes: (positions) => update((d) => moveNodes(d, positions)),
     connect: (source, target) => update((d) => connect(d, source, target)),
     setViewport: (vp: IRViewport) =>

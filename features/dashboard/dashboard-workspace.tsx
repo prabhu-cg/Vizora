@@ -11,7 +11,7 @@ import { ChartConfigPanel, RecommendationCard } from "@/features/charts/chart-co
 import { useChartQuery } from "@/features/charts/chart-stage";
 import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import {
-  GRID_COLUMNS, MAX_H, MAX_WIDGETS, MIN_H, MIN_W, addWidget, datasetOf, duplicateWidget, readDashboard, recommend, removeWidget, resizeWidget, moveWidget,
+  GRID_COLUMNS, MAX_H, MAX_WIDGETS, MIN_H, MIN_W, addWidget, datasetOf, duplicateWidget, kpiConfigFor, readDashboard, recommend, removeWidget, resizeWidget, moveWidget,
   updateWidgetChart, type ChartConfig, type Dashboard,
 } from "@/lib/charts";
 import type { VisualisationIR } from "@/types/visualisation";
@@ -55,6 +55,17 @@ export function DashboardCentre({ doc, state }: { doc: VisualisationIR; state: D
     queueMicrotask(() => newId && setSelected(newId));
   };
 
+  const addTile = () => {
+    if (!chosen) return;
+    let newId = "";
+    change((d) => {
+      const r = addWidget(d, kpiConfigFor(chosen), { w: 3, h: 2 });
+      newId = r.id;
+      return r.dashboard;
+    });
+    queueMicrotask(() => newId && setSelected(newId));
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div role="toolbar" aria-label="Dashboard tools" className="flex flex-wrap items-center gap-2 border-b border-border bg-surface px-3 py-2">
@@ -68,6 +79,9 @@ export function DashboardCentre({ doc, state }: { doc: VisualisationIR; state: D
         )}
         <Button size="sm" onClick={add} disabled={!chosen || dashboard.widgets.length >= MAX_WIDGETS}>
           <Plus aria-hidden="true" /> Add chart
+        </Button>
+        <Button size="sm" variant="outline" onClick={addTile} disabled={!chosen || dashboard.widgets.length >= MAX_WIDGETS}>
+          <Plus aria-hidden="true" /> Add number tile
         </Button>
         <p className="text-xs text-muted-foreground" aria-live="polite">
           {!chosen ? "Add data first, then add charts." : dashboard.widgets.length >= MAX_WIDGETS ? `A dashboard holds up to ${MAX_WIDGETS} charts.` : `${dashboard.widgets.length} chart${dashboard.widgets.length === 1 ? "" : "s"}. Drag by the handle, resize from the corner, or use the arrow keys.`}

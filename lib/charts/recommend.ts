@@ -105,6 +105,17 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
     return { kind: "bar", config: withKind(base, "bar"), reason: "There is no data yet. Add some to get a recommendation.", alternatives: [] };
   }
 
+  // 0. A schedule: a start date, an end date and something to name each task.
+  const START = /(start|begin|from|kick)/i, END = /(end|finish|due|deadline|until|\bto\b)/i;
+  const startCol = dates.find((c) => START.test(c.label)), endCol = dates.find((c) => END.test(c.label) && c.key !== startCol?.key);
+  const nameCol = cols.find((c) => c.type === "string" && c.distinct >= 2 && !isIdLike(c, rows));
+  if (startCol && endCol && nameCol && rows <= 500) {
+    const grouping = cols.find((c) => c.type === "string" && c.key !== nameCol.key && c.distinct >= 2 && c.distinct <= 8);
+    const cfg = chartConfigSchema.parse({ ...base, x: nameCol.key, y: [startCol.key, endCol.key], series: grouping?.key });
+    add("hbar", chartConfigSchema.parse({ ...base, x: nameCol.key, y: [], aggregation: "count" }), "Horizontal bars count the rows for each name.");
+    return result({ kind: "gantt", config: withKind(cfg, "gantt"), reason: `${q(startCol)} and ${q(endCol)} are dates, so each ${q(nameCol)} can be drawn as a bar from its start to its end: a Gantt chart shows the schedule${grouping ? `, coloured by ${q(grouping)}` : ""}.` });
+  }
+
   // 1. Time series
   if (dates.length && measures.length) {
     const time = dates[0]!;
@@ -116,6 +127,8 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
     const cfg = chartConfigSchema.parse({ ...base, x: time.key, y: ys.map((m) => m.key), timeBucket });
     const kind: ChartKind = ys.length > 1 ? "multi-line" : "line";
     add("area", withKind(cfg, "area"), `An area chart emphasises how much ${q(ys[0]!)} there is over time.`);
+    add("kpi", withKind({ ...cfg, y: [ys[0]!.key], timeBucket: time.distinct > 1 ? "month" : "none" }, "kpi"), `A number tile shows the latest period's ${q(ys[0]!)} and how it changed from the period before.`);
+    if (dates.length >= 2 && nameCol) add("gantt", withKind(chartConfigSchema.parse({ ...base, x: nameCol.key, y: [dates[0]!.key, dates[1]!.key] }), "gantt"), `With two date columns, ${q(nameCol)} can be drawn as a schedule from ${q(dates[0]!)} to ${q(dates[1]!)}.`);
     add("bar", withKind(cfg, "bar"), "Bars make individual periods easy to compare.");
     if (cats[0]) add("stacked-bar", withKind(cfg, "stacked-bar", { y: [ys[0]!.key], series: cats[0].key }), `Stacked bars split ${q(ys[0]!)} by ${q(cats[0])} in each period.`);
     if (ys.length === 1 && cats[0]) add("multi-line", withKind(cfg, "multi-line", { series: cats[0].key }), `One line per ${q(cats[0])} compares their trends.`);
@@ -149,6 +162,7 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
       add(wholeLike ? "bar" : "donut", withKind(cfg, wholeLike ? "bar" : "donut"), wholeLike ? `Bars compare the ${x.distinct} categories exactly.` : `With only ${x.distinct} categories, a donut shows each one's share of the total.`);
       add("pie", withKind(cfg, "pie"), `A pie shows each of the ${x.distinct} categories as a share of the whole.`);
     }
+    add("kpi", withKind({ ...cfg, x: undefined }, "kpi"), `A number tile shows the overall ${q(m)} as one headline figure.`);
     add("hbar", withKind(cfg, "hbar"), x.distinct > 8 ? `Horizontal bars read better with ${x.distinct} categories.` : "Horizontal bars suit long category names.");
     if (nonNegative(m) && x.distinct >= 3 && x.distinct <= 12 && !wholeLike) add("funnel", withKind(cfg, "funnel"), `A funnel shows ${q(m)} from the largest ${q(x)} to the smallest, which suits stages that drop off.`);
     if (dataset.rows.length >= x.distinct * 5) add("boxplot", withKind(cfg, "boxplot"), `A box plot shows the spread of ${q(m)} within each ${q(x)}: the median, the middle half and the outliers.`);
@@ -204,9 +218,23 @@ export function switchKind(config: ChartConfig, kind: ChartKind): ChartConfig {
   const next = { ...config, kind };
   if (kind === "pie" || kind === "donut" || kind === "funnel") return chartConfigSchema.parse({ ...next, y: config.y.slice(0, 1), series: undefined });
   if (kind === "boxplot") return chartConfigSchema.parse({ ...next, y: config.y.slice(0, 1), series: undefined, lines: [] });
+  if (kind === "kpi") return chartConfigSchema.parse({ ...next, x: undefined, y: config.y.slice(0, 1), series: undefined, lines: [] });
+  if (kind === "gantt") return chartConfigSchema.parse({ ...next, y: [], series: undefined, lines: [] });
   if (kind === "histogram") return chartConfigSchema.parse({ ...next, x: config.x, y: [], series: undefined });
   return chartConfigSchema.parse(next);
 }
 
 export const kindLabel = (k: ChartKind) => KIND_META[k].label;
 void defaultConfig;
+
+/**
+ * A sensible number tile for a dataset: its first real measure (or a row count),
+ * compared month on month when the data has dates.
+ */
+export function kpiConfigFor(dataset: Dataset): ChartConfig {
+  const profile = profileDataset(dataset);
+  const rows = dataset.rows.length;
+  const measure = profile.columns.find((c) => c.type === "number" && !isIdLike(c, rows) && !LABEL_NUMBER.test(c.label) && c.count > 0);
+  const date = profile.columns.find((c) => c.type === "date" && c.count > 0 && c.distinct > 1);
+  return chartConfigSchema.parse({ kind: "kpi", datasetId: dataset.id, y: measure ? [measure.key] : [], aggregation: measure ? "sum" : "count", x: date?.key, timeBucket: date ? "month" : "none" });
+}

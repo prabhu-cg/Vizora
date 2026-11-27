@@ -12,6 +12,9 @@ export interface ChartTheme {
   /** Label colours for text drawn on coloured shapes. */
   labelOnLight: string;
   labelOnDark: string;
+  /** Up and down, for change figures on number tiles. */
+  positive: string;
+  negative: string;
 }
 
 /** Light-theme values; used by tests, SSR and exports (which are always light, on white). */
@@ -24,6 +27,8 @@ export const FALLBACK_CHART_THEME: ChartTheme = {
   heatLow: "#faf4df",
   labelOnLight: "#353335",
   labelOnDark: "#ffffff",
+  positive: "#146c43",
+  negative: "#b3261e",
 };
 
 /** Resolve the active theme's chart colours from the CSS tokens (ECharts cannot read variables). */
@@ -39,6 +44,8 @@ export function readChartTheme(el: Element = document.documentElement): ChartThe
     heatLow: get("--primary-soft", FALLBACK_CHART_THEME.heatLow),
     labelOnLight: FALLBACK_CHART_THEME.labelOnLight,
     labelOnDark: FALLBACK_CHART_THEME.labelOnDark,
+    positive: get("--success", FALLBACK_CHART_THEME.positive),
+    negative: get("--destructive", FALLBACK_CHART_THEME.negative),
   };
 }
 

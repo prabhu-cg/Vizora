@@ -16,6 +16,7 @@ import {
   type NodeExtras,
 } from "./semantics";
 import { sortKeyOf } from "./interpret/dates";
+import { laneAtCross, laneGeometry, laneIndexOf, readLanes } from "./lanes";
 
 /**
  * Pure editing operations over the IR. Each returns a new document (or the
@@ -138,6 +139,14 @@ export function addNode(doc: VisualisationIR, opts: AddOptions = {}): AddResult 
       const maxY = Math.max(0, ...doc.nodes.map((n) => n.position.y + (n.size?.height ?? 44)));
       node = { ...node, position: { x: (k % 4) * 40, y: doc.nodes.length ? maxY + 50 : 0 } };
     }
+  }
+  const lanes = readLanes(doc);
+  if (lanes.length) {
+    // A new step joins the lane of the step it follows, or the lane where it was dropped, or the first lane.
+    let lane = anchor ? lanes[laneIndexOf(anchor, lanes)]! : lanes[0]!;
+    const geo = laneGeometry(doc);
+    if (!anchor && opts.position && geo) lane = lanes[laneAtCross(geo, geo.horizontal ? opts.position.y : opts.position.x)]!;
+    node = withExtras(node, { lane });
   }
   const edges = anchor && !(type === "flowchart" && anchor.type === "end") ? [...doc.edges, { id: createId(), source: anchor.id, target: id } as IREdge] : doc.edges;
   return { doc: { ...doc, nodes: [...doc.nodes, node], edges }, id };
@@ -274,12 +283,22 @@ export function deleteEdges(doc: VisualisationIR, ids: readonly string[]): Visua
 
 export function moveNodes(doc: VisualisationIR, positions: Readonly<Record<string, { x: number; y: number }>>): VisualisationIR {
   if (AUTO[doc.type]) return doc; // positions are derived for these types
+  const geo = laneGeometry(doc);
+  const lanes = readLanes(doc);
   let changed = false;
   const nodes = doc.nodes.map((n) => {
     const p = positions[n.id];
     if (!p || (p.x === n.position.x && p.y === n.position.y)) return n;
     changed = true;
-    return { ...n, position: { x: Math.round(p.x), y: Math.round(p.y) } };
+    let next: IRNode = { ...n, position: { x: Math.round(p.x), y: Math.round(p.y) } };
+    if (geo) {
+      // With swimlanes, where a step is dropped decides its lane; its cross-axis position is then derived from the lane.
+      const size = n.size ?? { width: 140, height: 44 };
+      const centre = geo.horizontal ? p.y + size.height / 2 : p.x + size.width / 2;
+      const lane = lanes[laneAtCross(geo, centre)]!;
+      if (laneIndexOf(n, lanes) !== lanes.indexOf(lane) || getExtras(n).lane !== lane) next = withExtras(next, { lane });
+    }
+    return next;
   });
   return changed ? { ...doc, nodes } : doc;
 }

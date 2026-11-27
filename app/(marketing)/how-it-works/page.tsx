@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
                 </p>
                 <p className="mt-3 text-lg text-body">{s.body}</p>
                 {i === 0 && <p className="mt-3 text-sm text-muted-foreground">Supported today: pasted text, and Excel (.xlsx), CSV, TSV or JSON files up to 25 MB.</p>}
-                {i === 1 && <p className="mt-3 text-sm text-muted-foreground">Today: flowcharts, mind maps, concept maps, timelines, seventeen chart types and dashboards.</p>}
+                {i === 1 && <p className="mt-3 text-sm text-muted-foreground">Today: flowcharts, mind maps, concept maps, timelines, nineteen chart types and dashboards.</p>}
                 {i === 2 && <p className="mt-3 text-sm text-muted-foreground">Changes are saved automatically. Export PNG, SVG, CSV, a dashboard PDF, editable JSON or a full backup at any time.</p>}
               </div>
               <div className={i % 2 === 1 ? "md:order-1" : undefined}>

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const CHART_KINDS = [
   "bar", "hbar", "line", "area", "pie", "donut", "scatter",
   "stacked-bar", "grouped-bar", "multi-line", "heatmap", "histogram", "treemap",
-  "stacked-100", "combo", "boxplot", "funnel",
+  "stacked-100", "combo", "boxplot", "funnel", "kpi", "gantt",
 ] as const;
 export type ChartKind = (typeof CHART_KINDS)[number];
 
@@ -32,6 +32,8 @@ export const KIND_META: Record<ChartKind, KindMeta> = {
   combo: { label: "Bar and line", group: "advanced", hint: "Bars for one measure and a line for another, optionally on a second axis." },
   boxplot: { label: "Box plot", group: "advanced", hint: "The spread of one numeric column: median, quartiles and outliers, per group." },
   funnel: { label: "Funnel", group: "advanced", hint: "Stages that shrink, such as sign-up to purchase." },
+  kpi: { label: "Number tile", group: "basic", hint: "One headline figure, optionally compared with the previous period." },
+  gantt: { label: "Gantt (schedule)", group: "advanced", hint: "Tasks as bars from a start date to an end date." },
 };
 
 export const AGGREGATIONS = ["sum", "avg", "count", "min", "max"] as const;
@@ -77,6 +79,9 @@ export const chartConfigSchema = z.object({
   palette: z.string().max(40).default("theme"),
   colors: z.record(z.string(), hex).default({}),
   smooth: z.boolean().default(false),
+  /** Number tile: text shown before and after the figure, such as "$" or "%". */
+  prefix: z.string().max(10).default(""),
+  suffix: z.string().max(10).default(""),
   /** Bar and line: which measures (column keys) are drawn as lines. Empty means the last measure. */
   lines: z.array(z.string().max(200)).max(12).default([]),
   /** Bar and line: draw the line measures against a second axis on the right. */
@@ -110,4 +115,4 @@ export const PALETTES: Record<string, { label: string; colors: string[] | null; 
 export const isChartKind = (v: string): v is ChartKind => (CHART_KINDS as readonly string[]).includes(v);
 
 /** Which kinds put categories on the X axis and aggregate a measure per category. */
-export const CATEGORY_KINDS: readonly ChartKind[] = ["bar", "hbar", "line", "area", "pie", "donut", "stacked-bar", "grouped-bar", "multi-line", "treemap", "stacked-100", "combo", "funnel"];
+export const CATEGORY_KINDS: readonly ChartKind[] = ["bar", "hbar", "line", "area", "pie", "donut", "stacked-bar", "grouped-bar", "multi-line", "treemap", "stacked-100", "combo", "funnel"];  // kpi and gantt have their own branches in the query

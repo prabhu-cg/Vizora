@@ -35,3 +35,6 @@ Structure lives in the IR proper (`type`, `label`, `position`, edges). Optional 
 
 ## Keyboard and accessibility
 Shortcuts are defined once (`features/editor/shortcuts.ts`) and drive both the handler and the help dialog. They are off while typing, off while a dialog is open, and Tab/Enter/Delete apply only when the canvas has focus, so page navigation is never trapped. Everything pointer-only (connecting, reparenting, reordering) has a form equivalent in the Inspector.
+
+## Swimlanes (flowcharts)
+Lanes are stored in `configuration.options.lanes` (ordered) and each step names its lane in `data.lane`. Bands are derived (`lib/engine/lanes.ts`): a band's size comes from the steps in it, and each step's cross-axis position is computed from its lane, so a step cannot be outside its lane. Only the position along the flow is stored. Dragging a step into another lane's band changes its lane (`moveNodes`). The interpreter reads a trailing `[Lane]` on a line (two or more distinct lanes are needed; one lane is ignored with a note); Start and End join the lane of the step beside them. Regenerating from text replaces the lanes. Lanes run left to right by default; top to bottom turns them into columns.
