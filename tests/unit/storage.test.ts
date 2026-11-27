@@ -123,7 +123,7 @@ describe("visualisations", () => {
     const p = await s.projects.create({ name: "P" });
     await s.visualisations.create(p.id, { ...sampleDoc(), nodes: [createNode({ position: { x: 0, y: 0 } })] });
     const [summary] = await s.visualisations.listByProject(p.id);
-    expect(summary).toMatchObject({ nodeCount: 1, datasetCount: 0, type: "diagram" });
+    expect(summary).toMatchObject({ nodeCount: 1, datasetCount: 0, type: "flowchart" });
   });
 });
 

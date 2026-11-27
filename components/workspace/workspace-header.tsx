@@ -1,16 +1,20 @@
 "use client";
 
-import { ArrowLeft, Copy, Download } from "lucide-react";
+import { ArrowLeft, Copy, Download, Redo2, Repeat2, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
+import { Spinner } from "@/components/shared/loading-state";
 import { SaveStatus } from "@/components/shared/save-status";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { TYPE_META } from "@/components/visualisations/type-meta";
 import { useEntitlements } from "@/features/entitlements/client";
 import type { AutosaveState } from "@/features/visualisation/autosave";
+import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import { useRequiredStorage } from "@/hooks/use-storage";
+import { ENGINE_TYPES, isEngineType, type EngineType } from "@/lib/engine";
 import { downloadBlob } from "@/lib/export";
 import { errorMessage, notify } from "@/lib/notify";
 import { exportManager } from "@/services";
@@ -23,13 +27,18 @@ export function WorkspaceHeader({
   save,
   update,
   saveNow,
+  onChangeType,
+  history,
 }: {
   document: VisualisationIR;
   projectId: string;
   visualisationId: string;
   save: AutosaveState;
-  update: (updater: (d: VisualisationIR) => VisualisationIR) => void;
+  update: (updater: (d: VisualisationIR) => VisualisationIR, options?: UpdateOptions) => void;
   saveNow: () => Promise<void>;
+  onChangeType: (target: EngineType) => void;
+  /** Shown here only for types without the editing toolbar (charts). */
+  history?: { undo: () => void; redo: () => void; canUndo: boolean; canRedo: boolean };
 }) {
   const storage = useRequiredStorage();
   const router = useRouter();
@@ -37,12 +46,13 @@ export function WorkspaceHeader({
   const titleId = useId();
   const [draft, setDraft] = useState(doc.title);
   const [busy, setBusy] = useState(false);
-  const exporters = exportManager.available();
+  const [exporting, setExporting] = useState(false);
+  const exporters = exportManager.available(doc);
 
   const changeTitle = (value: string) => {
     setDraft(value);
     const trimmed = value.trim();
-    if (trimmed) update((d) => (d.title === trimmed ? d : { ...d, title: trimmed }));
+    if (trimmed) update((d) => (d.title === trimmed ? d : { ...d, title: trimmed }), { coalesceKey: "title" });
   };
 
   const duplicate = async () => {
@@ -59,13 +69,16 @@ export function WorkspaceHeader({
     }
   };
 
-  const runExport = (id: string) => {
+  const runExport = async (id: string) => {
+    setExporting(true);
     try {
-      const { filename, blob } = exportManager.export(id, doc);
+      const { filename, blob } = await exportManager.export(id, doc);
       downloadBlob(filename, blob);
       notify.success("Exported", filename);
     } catch (error) {
       notify.error("Export failed", errorMessage(error));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -94,9 +107,40 @@ export function WorkspaceHeader({
 
       <SaveStatus state={save} />
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {history && (
+          <>
+            <Button variant="ghost" size="icon" className="size-9" aria-label="Undo" title="Undo (Ctrl/⌘ + Z)" disabled={!history.canUndo} onClick={history.undo}>
+              <Undo2 aria-hidden="true" />
+            </Button>
+            <Button variant="ghost" size="icon" className="size-9" aria-label="Redo" title="Redo (Ctrl/⌘ + Shift + Z)" disabled={!history.canRedo} onClick={history.redo}>
+              <Redo2 aria-hidden="true" />
+            </Button>
+          </>
+        )}
+        {isEngineType(doc.type) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Repeat2 aria-hidden="true" /> <span className="hidden sm:inline">Change type</span>
+                <span className="sr-only sm:hidden">Change type</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {ENGINE_TYPES.map((t) => {
+                const Icon = TYPE_META[t].icon;
+                return (
+                  <DropdownMenuItem key={t} disabled={t === doc.type} onSelect={() => onChangeType(t)}>
+                    <Icon aria-hidden="true" /> {TYPE_META[t].label}
+                    {t === doc.type && <span className="ml-auto text-xs text-muted-foreground">Current</span>}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         {entitlements.can("projects.manage") && (
-          <Button variant="secondary" size="sm" onClick={duplicate} disabled={busy}>
+          <Button variant="outline" size="sm" onClick={duplicate} disabled={busy}>
             <Copy aria-hidden="true" /> <span className="hidden sm:inline">Duplicate</span>
             <span className="sr-only sm:hidden">Duplicate</span>
           </Button>
@@ -104,13 +148,13 @@ export function WorkspaceHeader({
         {exporters.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="sm">
-                <Download aria-hidden="true" /> Export
+              <Button variant="outline" size="sm" disabled={exporting}>
+                {exporting ? <Spinner /> : <Download aria-hidden="true" />} Export
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {exporters.map((e) => (
-                <DropdownMenuItem key={e.id} onSelect={() => runExport(e.id)}>
+                <DropdownMenuItem key={e.id} onSelect={() => void runExport(e.id)}>
                   <span className="grid">
                     <span className="font-medium">{e.label}</span>
                     <span className="text-xs text-muted-foreground">{e.description}</span>

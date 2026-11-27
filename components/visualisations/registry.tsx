@@ -3,36 +3,29 @@
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 import { LoadingState } from "@/components/shared/loading-state";
+import { isEngineType } from "@/lib/engine/semantics";
 import type { VisualisationIR, VisualisationType } from "@/types/visualisation";
 
-/** Contract every renderer implements. Renderers read the IR and report edits as pure updates. */
+/** Contract for renderers that draw a whole document themselves (charts). */
 export interface RendererProps {
   document: VisualisationIR;
   onChange: (updater: (doc: VisualisationIR) => VisualisationIR) => void;
 }
 
-const loading = () => <LoadingState label="Loading renderer" rows={1} className="p-6" />;
+const loading = () => <LoadingState label="Loading chart" rows={1} className="p-6" />;
 
-/**
- * Renderer registry: the only place that knows which renderer draws which IR
- * type. Libraries are loaded lazily so they never weigh on the dashboard.
- * Types without an entry are not offered for creation yet.
- */
-const RENDERERS: Partial<Record<VisualisationType, ComponentType<RendererProps>>> = {
-  diagram: dynamic(() => import("@/features/diagrams/diagram-renderer"), { ssr: false, loading }),
-  chart: dynamic(() => import("@/features/charts/chart-renderer"), { ssr: false, loading }),
-};
+/** Flowcharts, mind maps, concept maps and timelines share the editor canvas; charts have their own renderer, loaded on demand. */
+const CHART = dynamic(() => import("@/features/charts/chart-renderer"), { ssr: false, loading }) as ComponentType<RendererProps>;
 
 export function hasRenderer(type: VisualisationType): boolean {
-  return type in RENDERERS;
+  return isEngineType(type) || type === "chart";
 }
 
-/** Renders the registered renderer for the document's type, or nothing if there is none. */
 export function VisualisationRenderer({ type, ...props }: RendererProps & { type: VisualisationType }) {
-  const Renderer = RENDERERS[type];
-  return Renderer ? <Renderer {...props} /> : null;
+  return type === "chart" ? <CHART {...props} /> : null;
 }
 
+/** Types a person can create today, in the order they are offered. */
 export function creatableTypes(): VisualisationType[] {
-  return Object.keys(RENDERERS) as VisualisationType[];
+  return ["flowchart", "mindmap", "conceptmap", "timeline", "chart"];
 }

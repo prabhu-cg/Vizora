@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/cn";
 
 export const metadata = pageMetadata({
   title: "Features",
-  description: "Everything Vizora can do today and what is planned: diagrams, charts, CSV and JSON import, editing, autosave and export. Each capability shows its real status.",
+  description: "What Vizora can do today: flowcharts, mind maps, concept maps, timelines and charts, editing, autosave, PNG, SVG and JSON export. Dashboards and AI are planned.",
   path: MARKETING_ROUTES.features.path,
 });
 
@@ -102,14 +102,14 @@ function EditingPanel({ id }: { id: string }) {
   const rows =
     id === "editing"
       ? [
-          ["Rename and describe", "Edit the title and description at any time."],
-          ["Autosave", "A Saved or Unsaved status is always visible."],
+          ["Undo and redo", "Step back and forward through your edits."],
+          ["Keyboard and Inspector", "Everything the pointer can do, you can do without it."],
           ["Safe in two tabs", "Vizora asks which version to keep rather than overwriting."],
         ]
       : [
-          ["Vizora JSON", "A lossless copy of one visualisation."],
+          ["PNG and SVG", "Images that keep your colours, shapes and labels."],
+          ["Vizora JSON", "A lossless, editable copy of one visualisation."],
           ["Full backup", "All projects in one file, restorable without overwriting."],
-          ["PNG, SVG, PDF", "Image export is planned."],
         ];
   return (
     <ul className="grid gap-3 rounded-card border border-border bg-surface p-4" aria-label={id === "editing" ? "Editing highlights" : "Export options"}>

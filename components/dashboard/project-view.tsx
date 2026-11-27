@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { useProject, useProjectVisualisations } from "@/features/projects/hooks";
 import { useRequiredStorage } from "@/hooks/use-storage";
 import { notify } from "@/lib/notify";
-import { createVisualisation } from "@/lib/visualisation/factory";
 import type { VisualisationSummary } from "@/types/visualisation";
 import { NewVisualisationDialog } from "./new-visualisation-dialog";
 import { ProjectFormDialog } from "./project-form-dialog";
@@ -109,8 +108,8 @@ export function ProjectView({ projectId }: { projectId: string }) {
       <NewVisualisationDialog
         open={creating}
         onOpenChange={setCreating}
-        onCreate={async (input) => {
-          const record = await storage.visualisations.create(projectId, createVisualisation(input));
+        onCreate={async (doc) => {
+          const record = await storage.visualisations.create(projectId, doc);
           router.push(`/app/workspace/${record.id}`);
         }}
       />

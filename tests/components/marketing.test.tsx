@@ -109,19 +109,29 @@ describe("pricing honesty", () => {
     expect(screen.getByText("per user per month, indicative")).toBeInTheDocument();
     expect(screen.getByText("forever")).toBeInTheDocument();
   });
+  it("Free lists only what works today", () => {
+    expect(PLANS[0]!.items.every((i) => i.status === "available")).toBe(true);
+    expect(PLANS[0]!.items.map((i) => i.text).join(" ")).toMatch(/Mind maps.*Concept maps.*Timelines/);
+  });
   it("every Pro and Team item is planned", () => {
     for (const p of PLANS.filter((p) => p.id !== "FREE")) expect(p.items.every((i) => i.status === "planned")).toBe(true);
   });
 });
 
 describe("no misleading claims", () => {
-  it("only diagrams, charts, editing and exporting are marked available", () => {
+  it("exactly what is built is marked available; dashboards are still planned", () => {
     const available = [...CAPABILITIES, ...WORKSPACE_FEATURES].filter((c) => c.status === "available").map((c) => c.id).sort();
-    expect(available).toEqual(["charts", "diagrams", "editing", "exporting"]);
+    expect(available).toEqual(["charts", "conceptmaps", "diagrams", "editing", "exporting", "generation", "mindmaps", "timelines"]);
+    expect(CAPABILITIES.find((c) => c.id === "dashboards")!.status).toBe("planned");
   });
-  it("unbuilt visual types are never marked available", () => {
-    for (const id of ["mindmaps", "conceptmaps", "timelines", "dashboards"]) expect(CAPABILITIES.find((c) => c.id === id)!.status).not.toBe("available");
-    expect(WORKSPACE_FEATURES.find((c) => c.id === "generation")!.status).not.toBe("available");
+  it("never claims AI: generation is described as rule-based and AI stays under 'not built'", () => {
+    const gen = WORKSPACE_FEATURES.find((c) => c.id === "generation")!;
+    expect(gen.today.join(" ")).not.toMatch(/\bAI\b/);
+    expect(gen.today.join(" ")).toMatch(/never invents/);
+    expect(gen.next.join(" ")).toMatch(/AI-assisted.*planned for Pro; not built/);
+  });
+  it("PDF export and dashboards are not claimed anywhere as working", () => {
+    for (const c of [...CAPABILITIES, ...WORKSPACE_FEATURES]) for (const line of c.today) expect(line).not.toMatch(/PDF|dashboard/i);
   });
   it("every capability and use case separates what works today from what is not built", () => {
     for (const c of [...CAPABILITIES, ...WORKSPACE_FEATURES]) expect(AVAILABILITY_LABEL[c.status]).toBeTruthy();

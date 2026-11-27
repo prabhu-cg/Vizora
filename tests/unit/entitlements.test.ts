@@ -46,17 +46,17 @@ describe("entitlement service", () => {
     expect(() => svc.assert("ai.assist")).toThrow(/not available yet/);
   });
 
-  it("the export manager enforces entitlements centrally", () => {
+  it("the export manager enforces entitlements centrally", async () => {
     const svc = createEntitlementService();
     const manager = createExportManager(svc);
-    expect(manager.available().map((e) => e.id)).toEqual(["vizora-json"]);
-    const { filename, blob } = manager.export("vizora-json", sampleDoc("My Chart!"));
+    expect(manager.available().map((e) => e.id)).toEqual(["png", "svg", "vizora-json"]);
+    const { filename, blob } = await manager.export("vizora-json", sampleDoc("My Chart!"));
     expect(filename).toBe("my-chart.vizora.json");
     expect(blob.type).toBe("application/json");
-    expect(() => manager.export("pdf", sampleDoc())).toThrow(/Unknown export format/);
+    await expect(manager.export("pdf", sampleDoc())).rejects.toThrow(/Unknown export format/);
 
     const denied = createExportManager({ ...svc, can: () => false, assert: () => { throw new EntitlementError("export.json", { allowed: false, reason: "not-released" }); } });
     expect(denied.available()).toEqual([]);
-    expect(() => denied.export("vizora-json", sampleDoc())).toThrow(EntitlementError);
+    await expect(denied.export("vizora-json", sampleDoc())).rejects.toThrow(EntitlementError);
   });
 });

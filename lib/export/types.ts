@@ -12,5 +12,7 @@ export interface Exporter {
   label: string;
   description: string;
   feature: FeatureId;
-  run(document: VisualisationIR): ExportArtifact;
+  /** Whether this format applies to the document (e.g. tables have no picture to export). */
+  supports?(document: VisualisationIR): boolean;
+  run(document: VisualisationIR): ExportArtifact | Promise<ExportArtifact>;
 }

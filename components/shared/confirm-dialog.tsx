@@ -24,6 +24,8 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel = "Delete",
+  confirmVariant = "destructive",
+  informOnly = false,
   onConfirm,
 }: {
   open: boolean;
@@ -31,6 +33,10 @@ export function ConfirmDialog({
   title: string;
   description: ReactNode;
   confirmLabel?: string;
+  /** Destructive for deletions; primary for ordinary confirmations. */
+  confirmVariant?: "destructive" | "primary";
+  /** Omit the confirm button (the dialog only informs). */
+  informOnly?: boolean;
   onConfirm: () => Promise<void>;
 }) {
   const [pending, setPending] = useState(false);
@@ -57,11 +63,13 @@ export function ConfirmDialog({
           </AlertDialogDescription>
         </AlertDialogBody>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <Button variant="destructive" onClick={confirm} disabled={pending}>
-            {pending && <Spinner />}
-            {confirmLabel}
-          </Button>
+          <AlertDialogCancel disabled={pending}>{informOnly ? "Close" : "Cancel"}</AlertDialogCancel>
+          {!informOnly && (
+            <Button variant={confirmVariant} onClick={confirm} disabled={pending}>
+              {pending && <Spinner />}
+              {confirmLabel}
+            </Button>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

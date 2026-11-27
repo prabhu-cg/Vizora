@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TYPE_META } from "@/components/visualisations/type-meta";
 import { formatRelative } from "@/lib/utils/time";
+import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import type { VisualisationIR } from "@/types/visualisation";
 
 export function DetailsPanel({
@@ -13,12 +14,12 @@ export function DetailsPanel({
   onChange,
 }: {
   document: VisualisationIR;
-  onChange: (updater: (d: VisualisationIR) => VisualisationIR) => void;
+  onChange: (updater: (d: VisualisationIR) => VisualisationIR, options?: UpdateOptions) => void;
 }) {
   const id = useId();
+  const unit = doc.type === "mindmap" ? "Branches" : doc.type === "timeline" ? "Events" : doc.type === "conceptmap" ? "Concepts" : "Items";
   const rows: [string, string][] = [
-    ["Nodes", String(doc.nodes.length)],
-    ["Connections", String(doc.edges.length)],
+    ...(doc.type === "chart" ? [] : ([[unit, String(doc.nodes.length)], doc.type === "timeline" ? undefined : ["Connections", String(doc.edges.length)]].filter(Boolean) as [string, string][])),
     ["Datasets", String(doc.data.datasets.length)],
     ["Source", doc.source.name ?? doc.source.kind],
     ["Created", formatRelative(doc.createdAt)],
@@ -40,7 +41,7 @@ export function DetailsPanel({
           value={doc.description}
           maxLength={2000}
           rows={4}
-          onChange={(e) => onChange((d) => ({ ...d, description: e.target.value }))}
+          onChange={(e) => onChange((d) => ({ ...d, description: e.target.value }), { coalesceKey: "description" })}
         />
       </div>
 

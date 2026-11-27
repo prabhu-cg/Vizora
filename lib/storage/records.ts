@@ -12,7 +12,8 @@ import { StorageError } from "./errors";
 const metaSchema = z.object({
   title: z.string(),
   description: z.string(),
-  type: visualisationTypeSchema,
+  // Read leniently: records written by earlier builds say "diagram". Normalised in summaryFromStored.
+  type: z.string(),
   nodeCount: z.number().int().nonnegative(),
   datasetCount: z.number().int().nonnegative(),
   createdAt: z.string(),
@@ -68,5 +69,7 @@ export function fromStored(raw: unknown): VisualisationRecord {
 
 export function summaryFromStored(raw: unknown): VisualisationSummary {
   const s = readStored(raw);
-  return { id: s.id, projectId: s.projectId, revision: s.revision, ...s.meta };
+  const type = visualisationTypeSchema.safeParse(s.meta.type === "diagram" ? "flowchart" : s.meta.type);
+  if (!type.success) throw new StorageError("A stored visualisation has an unknown type (corrupt record).");
+  return { id: s.id, projectId: s.projectId, revision: s.revision, ...s.meta, type: type.data };
 }

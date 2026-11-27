@@ -38,8 +38,8 @@ export default function PricingPage() {
         <PricingCards />
         <div className="mt-10 grid gap-4 text-body md:grid-cols-3">
           <p>
-            <strong className="text-foreground">Free is complete as it stands.</strong> Items marked “planned” inside Free are on the roadmap and are not
-            available yet.
+            <strong className="text-foreground">Free is complete as it stands.</strong> Everything listed under Free works today. Only Pro and Team
+            features are planned.
           </p>
           <p>
             <strong className="text-foreground">Nothing to buy.</strong> There is no checkout, subscription or waiting list in this version.

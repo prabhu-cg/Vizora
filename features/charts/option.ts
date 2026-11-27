@@ -31,7 +31,7 @@ export function selectChartData(doc: ChartInput): ChartSelection | undefined {
 }
 
 /** Pure IR → ECharts option. Returns undefined when no dataset is chartable. */
-export function buildChartOption(doc: ChartInput, theme: ChartTheme = FALLBACK_CHART_THEME): Record<string, unknown> | undefined {
+export function buildChartOption(doc: ChartInput, theme: ChartTheme = FALLBACK_CHART_THEME, opts: { decal?: boolean } = {}): Record<string, unknown> | undefined {
   const selection = selectChartData(doc);
   if (!selection) return undefined;
   const { dataset, categoryKey, valueKeys } = selection;
@@ -40,7 +40,7 @@ export function buildChartOption(doc: ChartInput, theme: ChartTheme = FALLBACK_C
 
   return {
     color: theme.series,
-    aria: { enabled: true, decal: { show: true } },
+    aria: { enabled: true, decal: { show: opts.decal ?? true } },
     animation: !(typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches),
     textStyle: { fontFamily: "inherit", color: theme.text },
     tooltip: { trigger: "axis" },

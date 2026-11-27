@@ -22,6 +22,9 @@ Scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `test`, `test:watch`, `fo
 
 Notes: all user data lives in the visitor's browser (IndexedDB); the only server code is `/api/health`. Security headers are set in `next.config.ts`.
 
+## Core visualisation engine (F2)
+Flowcharts, mind maps, concept maps and timelines, created from pasted text (rule-based, no AI) or by hand; full editing with undo/redo, keyboard shortcuts, format switching with a change preview, and PNG / SVG / editable JSON export. See `docs/engine.md` for the rules, limits and IR conventions.
+
 ## Marketing website (F1)
 Pages: `/`, `/features`, `/how-it-works`, `/use-cases`, `/pricing`, `/about`, `/faq`, `/privacy`, `/terms` (all static). Every claim lives in `lib/marketing/content.ts` with an availability status (`available` / `in-development` / `planned`); tests fail if an unbuilt feature is marked available, if Pro/Team show purchase controls, or if any link is dead.
 
@@ -54,5 +57,6 @@ Text colours, ochre-on-tint, semantic colours and form-control borders (3:1) are
 
 ## Known gaps (honest status)
 - Visual verification in a real browser was **not performed** (browser tooling unavailable); UI behaviour is covered by jsdom tests and a production build only. Please click through once: create project → diagram → add nodes → refresh → import CSV chart → export/import backup.
-- Only `diagram` and `chart` have renderers; `table`, `timeline`, `mindmap` exist in the IR but are not creatable yet.
+- Dashboards, PDF export and AI-assisted generation do not exist. `table` exists in the IR but has no renderer and is not creatable.
+- Mind maps and timelines position themselves; you rearrange a mind map via the Inspector ("Move under…", move up/down) rather than by dragging.
 - Visualisation list queries load full records (summaries are denormalised in `meta`, but IndexedDB still reads whole values). Split into a separate documents store if datasets get large.

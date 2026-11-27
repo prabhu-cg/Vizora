@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Bump together with a new entry in lib/visualisation/migrations.ts. */
-export const CURRENT_VISUALISATION_SCHEMA_VERSION = 1;
+export const CURRENT_VISUALISATION_SCHEMA_VERSION = 2;
 
 const isoDate = z.iso.datetime();
 const id = z.string().min(1).max(128);
@@ -9,11 +9,12 @@ const finite = z.number().finite();
 export const jsonRecordSchema = z.record(z.string(), z.json());
 
 export const VISUALISATION_TYPES = [
-  "diagram",
+  "flowchart",
+  "mindmap",
+  "conceptmap",
+  "timeline",
   "chart",
   "table",
-  "timeline",
-  "mindmap",
 ] as const;
 export const visualisationTypeSchema = z.enum(VISUALISATION_TYPES);
 
@@ -60,7 +61,7 @@ export const datasetSchema = z.strictObject({
 });
 
 export const layoutSchema = z.strictObject({
-  algorithm: z.enum(["manual", "layered", "tree", "force", "grid"]),
+  algorithm: z.enum(["manual", "layered", "tree", "force", "grid", "linear"]),
   direction: z.enum(["TB", "BT", "LR", "RL"]),
   spacing: z.strictObject({ x: finite.nonnegative(), y: finite.nonnegative() }),
 });

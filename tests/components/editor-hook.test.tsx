@@ -9,7 +9,7 @@ import { createTestStorage } from "../helpers";
 async function setup() {
   const storage = createTestStorage();
   const project = await storage.projects.create({ name: "P" });
-  const record = await storage.visualisations.create(project.id, createVisualisation({ title: "Doc", type: "diagram" }));
+  const record = await storage.visualisations.create(project.id, createVisualisation({ title: "Doc", type: "flowchart" }));
   const wrapper = ({ children }: { children: ReactNode }) => <StorageProvider storage={storage}>{children}</StorageProvider>;
   const open = () => renderHook(() => useVisualisationEditor(record.id), { wrapper });
   return { storage, record, open };
@@ -78,6 +78,49 @@ describe("useVisualisationEditor", () => {
     act(() => view.result.current.keepMine());
     await waitFor(() => expect(view.result.current.save.status).toBe("saved"));
     expect((await storage.visualisations.get(record.id))?.document.title).toBe("Mine");
+  });
+
+  it("undo and redo change the document, are saved like any edit, and survive a reload", async () => {
+    const { storage, record, open } = await setup();
+    const view = open();
+    await waitFor(() => expect(view.result.current.editor.phase).toBe("ready"));
+    expect(view.result.current.canUndo).toBe(false);
+
+    act(() => view.result.current.update((d) => ({ ...d, description: "one" })));
+    act(() => view.result.current.update((d) => ({ ...d, description: "two" })));
+    expect(view.result.current.canUndo).toBe(true);
+
+    act(() => view.result.current.undo());
+    const doc = () => (view.result.current.editor.phase === "ready" ? view.result.current.editor.document : undefined);
+    expect(doc()?.description).toBe("one");
+    expect(view.result.current.canRedo).toBe(true);
+    await act(() => view.result.current.saveNow());
+    expect((await storage.visualisations.get(record.id))?.document.description).toBe("one");
+
+    act(() => view.result.current.redo());
+    expect(doc()?.description).toBe("two");
+    await act(() => view.result.current.saveNow());
+    view.unmount();
+
+    const again = open();
+    await waitFor(() => expect(again.result.current.editor.phase).toBe("ready"));
+    const e = again.result.current.editor;
+    expect(e.phase === "ready" && e.document.description).toBe("two");
+    expect(again.result.current.canUndo).toBe(false); // history is per session; saved state is what persists
+  });
+
+  it("typing coalesces into one undo step; panning is not undoable", async () => {
+    const { open } = await setup();
+    const view = open();
+    await waitFor(() => expect(view.result.current.editor.phase).toBe("ready"));
+    for (const t of ["a", "ab", "abc"]) act(() => view.result.current.update((d) => ({ ...d, description: t }), { coalesceKey: "description" }));
+    act(() => view.result.current.update((d) => ({ ...d, viewport: { x: 10, y: 20, zoom: 2 } }), { history: false }));
+    act(() => view.result.current.undo());
+    const e = view.result.current.editor;
+    expect(e.phase === "ready" && e.document.description).toBe(""); // all three keystrokes undone together
+    expect(e.phase === "ready" && e.document.viewport.zoom).toBe(2); // viewport untouched by undo of text
+    act(() => view.result.current.undo());
+    expect(view.result.current.canUndo).toBe(false);
   });
 
   it("reports a missing visualisation", async () => {

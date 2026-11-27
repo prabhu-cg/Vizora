@@ -1,5 +1,4 @@
 import { FileJson, FileSpreadsheet, FilePlus2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { ChartVisual, FlowchartVisual } from "./illustrations";
 
 const tile = "rounded-card border border-border bg-surface p-4";
@@ -53,10 +52,9 @@ export function StepVisual({ step }: { step: 1 | 2 | 3 }) {
           </span>
         </div>
         <div className="rounded-input border border-border-strong bg-popover p-1">
-          <p className="rounded-lg bg-muted px-2.5 py-1.5 text-sm text-foreground">Vizora JSON</p>
-          <p className="flex items-center justify-between px-2.5 py-1.5 text-sm text-muted-foreground">
-            PNG, SVG <Badge variant="outline">Planned</Badge>
-          </p>
+          <p className="rounded-lg bg-muted px-2.5 py-1.5 text-sm text-foreground">PNG image</p>
+          <p className="px-2.5 py-1.5 text-sm text-foreground">SVG image</p>
+          <p className="px-2.5 py-1.5 text-sm text-foreground">Vizora JSON (editable)</p>
         </div>
       </div>
     </div>

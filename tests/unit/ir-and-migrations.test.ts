@@ -5,7 +5,7 @@ import { InvalidVisualisationError, parseVisualisation } from "@/lib/visualisati
 
 describe("Visualisation IR schema", () => {
   it("accepts a freshly created visualisation with every required IR field", () => {
-    const doc = createVisualisation({ title: "T", type: "diagram" });
+    const doc = createVisualisation({ title: "T", type: "flowchart" });
     expect(visualisationSchema.safeParse(doc).success).toBe(true);
     for (const key of [
       "id", "schemaVersion", "title", "description", "type", "source",
@@ -16,7 +16,7 @@ describe("Visualisation IR schema", () => {
   });
 
   it("rejects duplicate node ids and dangling edges", () => {
-    const doc = createVisualisation({ title: "T", type: "diagram" });
+    const doc = createVisualisation({ title: "T", type: "flowchart" });
     const a = createNode({ id: "a", position: { x: 0, y: 0 } });
     expect(visualisationSchema.safeParse({ ...doc, nodes: [a, a] }).success).toBe(false);
     const dangling = { ...doc, nodes: [a], edges: [{ id: "e", source: "a", target: "zzz" }] };
@@ -24,7 +24,7 @@ describe("Visualisation IR schema", () => {
   });
 
   it("rejects non-finite coordinates, empty titles, unknown keys and bad types", () => {
-    const doc = createVisualisation({ title: "T", type: "diagram" });
+    const doc = createVisualisation({ title: "T", type: "flowchart" });
     const bad = (patch: object) => visualisationSchema.safeParse({ ...doc, ...patch }).success;
     expect(bad({ nodes: [{ ...createNode({ position: { x: Infinity, y: 0 } }) }] })).toBe(false);
     expect(bad({ title: "   " })).toBe(false);
@@ -45,19 +45,38 @@ describe("schema migrations", () => {
     expect(doc.createdAt).toBeTruthy();
   });
 
+  it("v0 documents pass through both steps and end as flowcharts", () => {
+    const doc = parseVisualisation({ id: "old", title: "Legacy", nodes: [{ id: "n", type: "default", label: "L", position: { x: 1, y: 2 }, data: {} }] });
+    expect(doc.type).toBe("flowchart");
+    expect(doc.nodes[0]!.type).toBe("process");
+  });
+
+  it("v1 → v2: diagrams become flowcharts with explicit node kinds; other types are untouched", () => {
+    const v1 = (type: string, nodeType: string) => ({
+      id: "d", schemaVersion: 1, title: "T", description: "", type, source: { kind: "manual" },
+      nodes: [{ id: "a", type: nodeType, label: "A", position: { x: 0, y: 0 }, data: {} }],
+      edges: [], data: { datasets: [] }, configuration: { options: {} },
+      layout: { algorithm: "manual", direction: "TB", spacing: { x: 80, y: 80 } },
+      viewport: { x: 0, y: 0, zoom: 1 }, createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    expect(parseVisualisation(v1("diagram", "default"))).toMatchObject({ schemaVersion: 2, type: "flowchart", nodes: [{ type: "process" }] });
+    expect(parseVisualisation(v1("diagram", "input")).nodes[0]!.type).toBe("io");
+    expect(parseVisualisation(v1("chart", "default"))).toMatchObject({ type: "chart", nodes: [{ type: "default" }] });
+  });
+
   it("is idempotent for current documents", () => {
     const doc = createVisualisation({ title: "T", type: "chart" });
     expect(parseVisualisation(doc)).toEqual(doc);
   });
 
   it("refuses documents from a newer schema instead of downgrading them", () => {
-    const doc = { ...createVisualisation({ title: "T", type: "diagram" }), schemaVersion: CURRENT_VISUALISATION_SCHEMA_VERSION + 1 };
+    const doc = { ...createVisualisation({ title: "T", type: "flowchart" }), schemaVersion: CURRENT_VISUALISATION_SCHEMA_VERSION + 1 };
     expect(() => parseVisualisation(doc)).toThrow(SchemaVersionError);
     expect(() => parseVisualisation(doc)).toThrow(/newer version/);
   });
 
   it("reports invalid content with a readable message", () => {
-    const doc = { ...createVisualisation({ title: "T", type: "diagram" }), title: "" };
+    const doc = { ...createVisualisation({ title: "T", type: "flowchart" }), title: "" };
     expect(() => parseVisualisation(doc)).toThrow(InvalidVisualisationError);
   });
 

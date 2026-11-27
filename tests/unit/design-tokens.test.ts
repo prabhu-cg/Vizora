@@ -64,7 +64,7 @@ describe("Butter tokens", () => {
 });
 
 describe("Token Only Rule", () => {
-  const exempt = new Set(["components/brand/logo.tsx", "app/global-error.tsx", "app/icon.svg", "app/opengraph-image.tsx"]);
+  const exempt = new Set(["components/brand/logo.tsx", "app/global-error.tsx", "app/icon.svg", "app/opengraph-image.tsx", "features/charts/svg.ts"]); // no CSS available: social card and exported images
   function walk(dir: string): string[] {
     return readdirSync(dir).flatMap((name) => {
       const p = join(dir, name);

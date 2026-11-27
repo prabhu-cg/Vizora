@@ -2,7 +2,7 @@ import { CURRENT_VISUALISATION_SCHEMA_VERSION } from "@/lib/validation";
 import { createId } from "@/lib/utils/id";
 import { nowIso } from "@/lib/utils/time";
 import type { IRNode, VisualisationIR, VisualisationType } from "@/types/visualisation";
-import { DEFAULT_LAYOUT, DEFAULT_VIEWPORT } from "./defaults";
+import { DEFAULT_VIEWPORT, defaultLayoutFor } from "./defaults";
 
 export interface NewVisualisationInput {
   title: string;
@@ -23,7 +23,7 @@ export function createVisualisation(input: NewVisualisationInput): Visualisation
     edges: [],
     data: { datasets: [] },
     configuration: { options: {} },
-    layout: { ...DEFAULT_LAYOUT, spacing: { ...DEFAULT_LAYOUT.spacing } },
+    layout: defaultLayoutFor(input.type),
     viewport: { ...DEFAULT_VIEWPORT },
     createdAt: now,
     updatedAt: now,
@@ -33,7 +33,7 @@ export function createVisualisation(input: NewVisualisationInput): Visualisation
 export function createNode(partial: Partial<IRNode> & Pick<IRNode, "position">): IRNode {
   return {
     id: createId(),
-    type: "default",
+    type: "process",
     label: "New node",
     data: {},
     ...partial,

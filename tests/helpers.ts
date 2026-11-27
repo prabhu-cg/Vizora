@@ -8,5 +8,5 @@ export function createTestStorage(): IndexedDbStorage {
 }
 
 export function sampleDoc(title = "Sample") {
-  return createVisualisation({ title, type: "diagram" });
+  return createVisualisation({ title, type: "flowchart" });
 }

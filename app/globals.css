@@ -108,7 +108,14 @@ strong, b { font-weight: 600; }
 .vz-dialog[data-state="closed"] { animation: vz-pop-out 120ms ease-in; }
 
 /* React Flow follows the tokens (its own colorMode handles the rest). */
-.react-flow__attribution { display: none; }
+/* React Flow asks that its attribution stays visible unless you hold a Pro licence; keep it, styled quietly. */
+.react-flow__attribution {
+  background: color-mix(in srgb, var(--card) 85%, transparent) !important;
+  color: var(--muted-foreground) !important;
+  font-size: 10px;
+  border-radius: var(--radius-input) 0 0 0;
+}
+.react-flow__attribution a { color: inherit !important; }
 .vz-flow .react-flow__node-default,
 .vz-flow .react-flow__node-input,
 .vz-flow .react-flow__node-output {

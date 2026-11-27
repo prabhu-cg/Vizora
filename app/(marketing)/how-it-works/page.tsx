@@ -8,13 +8,13 @@ import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
   title: "How it works",
-  description: "From input to visual: import data or start blank, choose a diagram or chart, then edit and export. See what runs today and what AI features are planned.",
+  description: "From input to visual: paste text, import data or start blank, pick a type, then edit and export. See how the rule-based engine works and what AI is planned.",
   path: MARKETING_ROUTES.howItWorks.path,
 });
 
 const EXPORT_EXAMPLE = `{
   "id": "…",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "title": "Quarterly review",
   "type": "chart",
   "source": { "kind": "csv", "name": "sales-2026.csv" },
@@ -56,9 +56,9 @@ export default function HowItWorksPage() {
                   <span className="font-display text-3xl font-medium text-foreground">{s.title}</span>
                 </p>
                 <p className="mt-3 text-lg text-body">{s.body}</p>
-                {i === 0 && <p className="mt-3 text-sm text-muted-foreground">Supported today: CSV and JSON files up to 25 MB.</p>}
-                {i === 1 && <p className="mt-3 text-sm text-muted-foreground">Today: diagrams and bar or line charts. Mind maps, concept maps, timelines and dashboards are planned.</p>}
-                {i === 2 && <p className="mt-3 text-sm text-muted-foreground">Changes are saved automatically. Export a JSON file or a full backup at any time.</p>}
+                {i === 0 && <p className="mt-3 text-sm text-muted-foreground">Supported today: pasted text, and CSV or JSON files up to 25 MB.</p>}
+                {i === 1 && <p className="mt-3 text-sm text-muted-foreground">Today: flowcharts, mind maps, concept maps, timelines and bar or line charts. Dashboards are planned.</p>}
+                {i === 2 && <p className="mt-3 text-sm text-muted-foreground">Changes are saved automatically. Export PNG, SVG, editable JSON or a full backup at any time.</p>}
               </div>
               <div className={i % 2 === 1 ? "md:order-1" : undefined}>
                 <StepVisual step={(i + 1) as 1 | 2 | 3} />
@@ -131,9 +131,9 @@ export default function HowItWorksPage() {
             </div>
             <CheckList
               items={[
-                "You build diagrams yourself on the canvas",
+                "Text is read by fixed rules: numbered steps, “if … otherwise …”, outlines, dates, “A depends on B”",
+                "Anything it cannot read is reported to you, never guessed",
                 "Imported tables are parsed by fixed rules (types, headers, delimiters)",
-                "Charts are built directly from your columns",
                 "Nothing leaves your browser",
               ]}
             />

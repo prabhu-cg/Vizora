@@ -14,6 +14,20 @@ import { DEFAULT_LAYOUT, DEFAULT_VIEWPORT } from "./defaults";
  * schema, add `steps[oldVersion]`, and add a fixture test.
  */
 const steps: Record<number, MigrationStep> = {
+  // v1 → v2: "diagram" became "flowchart" (with explicit node kinds); "conceptmap" and the
+  // "linear" layout were added. Diagram nodes of kind "default" are process steps.
+  1: (doc) => {
+    const wasDiagram = doc.type === "diagram";
+    const nodes = Array.isArray(doc.nodes)
+      ? (doc.nodes as Record<string, unknown>[]).map((n) => {
+          if (!wasDiagram) return n;
+          const kind = n.type === "input" || n.type === "output" ? "io" : n.type === "default" || n.type === undefined ? "process" : n.type;
+          return { ...n, type: kind };
+        })
+      : doc.nodes;
+    return { ...doc, type: wasDiagram ? "flowchart" : doc.type, nodes };
+  },
+
   // v0 (unversioned pre-release documents) → v1: fill every field the v1 IR requires.
   0: (doc) => {
     const now = new Date().toISOString();

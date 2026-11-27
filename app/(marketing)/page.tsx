@@ -119,7 +119,7 @@ export default function HomePage() {
 
       {/* What can you visualise */}
       <Band id="examples">
-        <SectionHeading id="examples" title="What can you visualise?" lead="Practical starting points. Where a visual type is still planned, the card says so." />
+        <SectionHeading id="examples" title="What can you visualise?" lead="Practical starting points, each one something Vizora can do today." />
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {EXAMPLES.map((e) => (
             <li key={e.title} className="rounded-card border border-border bg-card p-5">

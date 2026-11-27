@@ -2,6 +2,7 @@
 
 import { BarChart, LineChart } from "echarts/charts";
 import { AriaComponent, GridComponent, LegendComponent, TooltipComponent } from "echarts/components";
+import { LegacyGridContainLabel } from "echarts/features";
 import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { BarChart3 } from "lucide-react";
@@ -13,7 +14,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { buildChartOption, chartKindOf, type ChartKind } from "./option";
 import { readChartTheme } from "./theme";
 
-echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, AriaComponent, CanvasRenderer]);
+echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, AriaComponent, LegacyGridContainLabel, CanvasRenderer]);
 
 export default function ChartRenderer({ document: doc, onChange }: RendererProps) {
   const host = useRef<HTMLDivElement>(null);
