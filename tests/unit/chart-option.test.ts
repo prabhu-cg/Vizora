@@ -146,6 +146,31 @@ describe("legend", () => {
       expect(legend.bottom, key).toBe(0);
     }
   });
+  it("with many entries the legend becomes a vertical, scrollable list on the right and the chart keeps its room", () => {
+    const rows = Array.from({ length: 40 }, (_, i) => `c${i},${i + 1}`).join("\n");
+    const D2 = buildDataset(readText(`cat,n\n${rows}`), {}, () => "d2").dataset;
+    const config = cfg({ kind: "donut", x: "cat", y: ["n"] });
+    const r = runChartQuery(D2, config);
+    if (!r.ok) throw new Error(r.error);
+    const o = buildEChartsOption(r.data, config) as Record<string, any>;
+    const legend = [o.legend].flat()[0];
+    expect(legend).toMatchObject({ type: "scroll", orient: "vertical", right: 0 });
+    expect(o.grid?.right ?? 0).toBe(0); // (pie has no grid)
+    expect(legend.bottom).toBe(8); // spans the height so it scrolls rather than overflowing
+    expect(parseFloat(o.series[0].center[0])).toBeLessThan(50); // chart shifts left to make room
+  });
+  it("a side legend never overlaps the plot: the plot keeps a gutter wider than the legend", () => {
+    const names = Array.from({ length: 30 }, (_, i) => `Film number ${i}`);
+    const csv = ["cat,series,n", ...names.map((n, i) => `${i % 3 === 0 ? "A" : "B"},${n},${i + 1}`)].join("\n");
+    const D3 = buildDataset(readText(csv), {}, () => "d3").dataset;
+    const config = cfg({ kind: "stacked-bar", x: "cat", y: ["n"], series: "series" });
+    const r = runChartQuery(D3, config);
+    if (!r.ok) throw new Error(r.error);
+    const o = buildEChartsOption(r.data, config) as Record<string, any>;
+    const legend = [o.legend].flat()[0];
+    expect(legend).toMatchObject({ orient: "vertical", right: 0 });
+    expect(o.grid.right).toBeGreaterThan(legend.width);
+  });
   it("leaves room for the legend rows so entries never overlap the chart", () => {
     const o = opt({ kind: "bar", ...BASE });
     expect(o.grid.bottom).toBeGreaterThanOrEqual(38);

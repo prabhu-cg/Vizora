@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Redo2, Undo2 } from "lucide-react";
+import { ChevronRight, Plus, Redo2, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { ChartCentre, ChartSettings } from "@/features/charts/chart-workspace";
@@ -77,8 +77,11 @@ export default function DataWorkspace({ doc, update, undo, redo, canUndo, canRed
           ) : (
             <>
               <ChartSettings doc={doc} update={update} />
-              <details className="border-t border-border">
-                <summary className="flex min-h-11 cursor-pointer items-center px-4 text-[15px] font-semibold">About this chart</summary>
+              <details className="group border-b border-border">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
+                  About this chart
+                  <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground transition-transform group-open:rotate-90" />
+                </summary>
                 {details}
               </details>
             </>

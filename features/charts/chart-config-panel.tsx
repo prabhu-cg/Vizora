@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -21,7 +21,7 @@ function Section({ title, children, open = false }: { title: string; children: R
     <details open={open} className="group border-b border-border">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
         {title}
-        <span aria-hidden="true" className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+        <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground transition-transform group-open:rotate-90" />
       </summary>
       <div className="grid gap-4 px-4 pb-5">{children}</div>
     </details>

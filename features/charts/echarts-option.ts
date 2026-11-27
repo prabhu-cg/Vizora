@@ -28,24 +28,33 @@ export function buildEChartsOption(data: ChartData, config: ChartConfig, theme: 
     title: config.title || config.subtitle ? { text: config.title, subtext: config.subtitle, left: 0, top: 0, textStyle: { color: theme.text, fontSize: 16, fontWeight: 600, fontFamily: "inherit" }, subtextStyle: { color: theme.muted, fontFamily: "inherit" } } : undefined,
     tooltip: { show: config.tooltips, trigger: CARTESIAN.has(kind) ? "axis" : "item", confine: true },
   };
-  const legendPos = config.legend.position;
-  // Every legend entry is always visible: a plain legend wraps onto extra rows instead of scrolling.
+  // A few entries sit in a plain row at the bottom, all visible. Many entries would crush the
+  // chart, so they move to a vertical list on the right that scrolls instead.
   const legendNames: string[] = kind === "pie" || kind === "donut" ? data.categories : data.series.map((x) => x.name);
-  const legendRows = (names: string[]) => (legendPos === "left" || legendPos === "right" ? 1 : Math.max(1, Math.ceil((names.reduce((n, x) => n + Math.min(x.length, 24) * 7 + 44, 0)) / 620)));
+  const MANY = 8;
+  const many = legendNames.length > MANY;
+  const legendPos: ChartConfig["legend"]["position"] = many && config.legend.show ? "right" : config.legend.position;
+  const sideLegend = legendPos === "left" || legendPos === "right";
+  const legendRows = (names: string[]) => (sideLegend ? 1 : Math.max(1, Math.ceil(names.reduce((n, x) => n + Math.min(x.length, 24) * 7 + 44, 0) / 620)));
   const legendBase = (names: string[]) => ({
     show: config.legend.show && names.length > 0,
     data: names,
-    type: "plain",
-    itemGap: 14,
-    formatter: (n: string) => (n.length > 28 ? `${n.slice(0, 27)}…` : n),
+    type: many ? "scroll" : "plain",
+    itemGap: many ? 8 : 14,
+    formatter: (n: string) => { const max = sideLegend ? (many ? 18 : 11) : 28; return n.length > max ? `${n.slice(0, max - 1)}…` : n; },
+    tooltip: { show: true },
     textStyle: { color: theme.text },
-    ...(legendPos === "top" ? { top: config.title || config.subtitle ? 36 : 0, left: "center" } : legendPos === "bottom" ? { bottom: 0, left: "center" } : legendPos === "left" ? { left: 0, top: "middle", orient: "vertical" } : { right: 0, top: "middle", orient: "vertical" }),
+    pageIconColor: theme.text,
+    pageTextStyle: { color: theme.muted },
+    ...(legendPos === "top" ? { top: config.title || config.subtitle ? 36 : 0, left: "center" } : legendPos === "bottom" ? { bottom: 0, left: "center" } : legendPos === "left" ? { left: 0, top: 8, bottom: 8, width: legendWidth, orient: "vertical" } : { right: 0, top: 8, bottom: 8, width: legendWidth, orient: "vertical" }),
   });
   const rows = config.legend.show ? legendRows(legendNames) : 0;
+  const legendWidth = many ? 150 : 96;
+  const sideWidth = legendWidth + 28; // legend plus a gutter, so it never touches the plot
   const headroom = (config.title || config.subtitle ? 44 : 8) + (config.legend.show && legendPos === "top" ? 8 + rows * 24 : 0);
   const grid = {
-    left: legendPos === "left" && config.legend.show ? 110 : 12,
-    right: legendPos === "right" && config.legend.show ? 110 : 24,
+    left: legendPos === "left" && config.legend.show ? sideWidth : 12,
+    right: legendPos === "right" && config.legend.show ? sideWidth : 24,
     top: headroom + 8,
     bottom: (legendPos === "bottom" && config.legend.show ? 14 + rows * 24 : 8) + (xName || kind === "hbar" ? 22 : 0),
     containLabel: true,
@@ -103,7 +112,7 @@ export function buildEChartsOption(data: ChartData, config: ChartConfig, theme: 
       ...common,
       color: colours,
       legend: legendBase(items.map((d) => d.name)),
-      series: [{ name: s?.name ?? "", type: "pie", radius: kind === "donut" ? ["46%", `${70 - (rows - 1) * 3}%`] : `${68 - (rows - 1) * 3}%`, center: ["50%", config.legend.show && legendPos === "bottom" ? `${50 - rows * 3.5}%` : legendPos === "top" && config.legend.show ? `${52 + rows * 3.5}%` : "52%"], avoidLabelOverlap: true, itemStyle: { borderColor: theme.surface, borderWidth: 2 }, label: { show: config.dataLabels, color: theme.text, formatter: "{b}: {d}%" }, labelLine: { show: config.dataLabels }, data: items }],
+      series: [{ name: s?.name ?? "", type: "pie", radius: kind === "donut" ? ["46%", `${70 - (rows - 1) * 3}%`] : `${68 - (rows - 1) * 3}%`, center: [config.legend.show && legendPos === "right" ? "40%" : config.legend.show && legendPos === "left" ? "60%" : "50%", config.legend.show && legendPos === "bottom" ? `${50 - rows * 3.5}%` : legendPos === "top" && config.legend.show ? `${52 + rows * 3.5}%` : "52%"], avoidLabelOverlap: true, itemStyle: { borderColor: theme.surface, borderWidth: 2 }, label: { show: config.dataLabels, color: theme.text, formatter: "{b}: {d}%" }, labelLine: { show: config.dataLabels }, data: items }],
     };
   }
 
