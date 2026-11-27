@@ -15,6 +15,8 @@ export function defaultLayoutFor(type: VisualisationType): IRLayout {
       return { algorithm: "layered", direction: "TB", spacing: { x: 70, y: 70 } };
     case "mindmap":
       return { algorithm: "tree", direction: "LR", spacing: { x: 90, y: 28 } };
+    case "orgchart":
+      return { algorithm: "tree", direction: "TB", spacing: { x: 28, y: 56 } };
     case "conceptmap":
       return { algorithm: "layered", direction: "TB", spacing: { x: 90, y: 110 } };
     case "timeline":

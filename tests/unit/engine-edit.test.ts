@@ -331,7 +331,7 @@ describe("format switching", () => {
     expect([r.id, r.title, r.createdAt, r.source.kind]).toEqual([f.id, f.title, f.createdAt, f.source.kind]);
   });
   it("every pair of engine types converts to a valid, non-overlapping document", () => {
-    const docs = { flowchart: make(FLOW, "flowchart"), mindmap: make(MIND, "mindmap"), conceptmap: make(CONCEPT, "conceptmap"), timeline: make(TIME, "timeline") };
+    const docs = { flowchart: make(FLOW, "flowchart"), mindmap: make(MIND, "mindmap"), orgchart: make("Ada Lovelace - CEO\n  Bo Chen - CTO\n    Cy Diaz - Engineer\n  Di Evans - COO", "orgchart"), conceptmap: make(CONCEPT, "conceptmap"), timeline: make(TIME, "timeline") };
     for (const from of Object.keys(docs) as EngineType[]) for (const to of Object.keys(docs) as EngineType[]) {
       const r = planConversion(docs[from], to).result!;
       expect(r.type, `${from}→${to}`).toBe(to);

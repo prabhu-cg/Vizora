@@ -264,7 +264,7 @@ function kpiOption(data: ChartData, config: ChartConfig, theme: ChartTheme, flag
   const change = k.change;
   const delta = change === undefined ? (k.period ? "No comparison available" : "") : `${change >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(change * 1000) / 10)}% vs ${k.previousPeriod}`;
   const deltaColour = change === undefined ? theme.muted : change >= 0 ? theme.positive : theme.negative;
-  const font = (size: number, weight: number) => `${weight} ${size}px system-ui, sans-serif` // no quotes: ECharts writes this into an SVG attribute unescaped;
+  const font = (size: number, weight: number) => `${weight} ${size}px DM Sans, system-ui, sans-serif` // no quotes: ECharts writes this into an SVG attribute unescaped;
   const blockH = small + 8 + fig + (delta ? 10 + small : 0);
   const top = Math.max(4, (h - blockH) / 2);
   const text = (t: string, y: number, size: number, weight: number, fill: string) => ({ type: "text", left: "center", top: y, style: { text: t, fill, font: font(size, weight), textAlign: "center" } });

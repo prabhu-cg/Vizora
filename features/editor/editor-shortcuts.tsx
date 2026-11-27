@@ -3,6 +3,7 @@
 import { useReactFlow } from "@xyflow/react";
 import { useEffect, useRef } from "react";
 import type { VisualisationIR } from "@/types/visualisation";
+import { isTreeType } from "@/lib/engine/semantics";
 import { matchShortcut, shouldHandle } from "./shortcuts";
 import type { EditorSession } from "./use-editor-session";
 
@@ -44,7 +45,7 @@ export function EditorShortcuts({
           if (one && (e.target as Element | null)?.closest?.(".react-flow__node")) s.addChildOf(one);
           else handled = false;
           break;
-        case "add-sibling": if (d.type === "mindmap" && one) s.addSibling(); else handled = false; break;
+        case "add-sibling": if (isTreeType(d.type) && one) s.addSibling(); else handled = false; break;
         case "select-all": s.selectAll(); break;
         case "fit": void flow.fitView({ padding: 0.2, maxZoom: 1.1 }); break;
         case "zoom-in": void flow.zoomIn(); break;

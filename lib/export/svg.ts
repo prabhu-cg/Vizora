@@ -2,6 +2,7 @@ import { edgeGeometry, rectOf, type Rect } from "@/lib/engine/edges";
 import { hiddenNodeIds } from "@/lib/engine/ops";
 import { formatDateValue } from "@/lib/engine/interpret/dates";
 import { LINE_H, textColumns } from "@/lib/engine/layout/size";
+import { initials } from "@/lib/engine/people";
 import { applyLayout, laneGeometry, timelineGeometry, withLanePositions } from "@/lib/engine";
 import { getColor, getExtras, isDirected, isEngineType } from "@/lib/engine/semantics";
 import { wrapText } from "@/lib/engine/text";
@@ -31,6 +32,34 @@ function lines(x: number, y: number, rows: string[], opts: { size?: number; lh?:
 /** Vertical centre for a block of `count` text lines. */
 const blockTop = (r: Rect, count: number, lh = LINE_H) => r.y + r.height / 2 - ((count - 1) * lh) / 2 + 5;
 
+/** A person's card on an org chart: avatar with initials, name, role. Mirrors the on-screen card. */
+function person(n: IRNode, r: Rect, collapsedReports: number): string {
+  const ex = getExtras(n);
+  const root = n.type === "topic";
+  const colour = getColor(n);
+  const ring = colour === "default" ? T.control : T.colours[colour];
+  const avatarFill = root ? T.amber : colour === "default" ? tint(T.amber, 0.84) : tint(T.colours[colour], 0.84);
+  const cy = r.y + r.height / 2;
+  const textX = r.x + 56;
+  const cols = Math.max(6, Math.floor((r.width - 72) / 7.2));
+  const nameRows = wrapText(n.label, cols, 2);
+  const roleRows = ex.description ? wrapText(ex.description, cols, 2) : [];
+  const total = nameRows.length * 19 + (roleRows.length ? roleRows.length * 17 + 3 : 0);
+  let y = cy - total / 2 + 14;
+  let out = `<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" rx="14" fill="${T.paper}" stroke="${root ? T.amberDeep : T.hairline}" stroke-width="${root ? 1.8 : 1.5}"/>`;
+  out += `<circle cx="${r.x + 12 + 18}" cy="${cy}" r="18" fill="${avatarFill}"${colour === "default" || root ? "" : ` stroke="${ring}" stroke-width="1.5"`}/>`;
+  out += `<text x="${r.x + 30}" y="${cy + 4.5}" font-size="13" font-weight="600" fill="${root ? T.ink : colour === "default" ? T.amberText : T.ink}" text-anchor="middle">${esc(initials(n.label))}</text>`;
+  out += lines(textX, y, nameRows, { weight: 600, anchor: "start" });
+  y += nameRows.length * 19 + 3;
+  if (roleRows.length) out += lines(textX, y, roleRows, { size: 12, lh: 17, fill: T.muted, anchor: "start" });
+  if (collapsedReports > 0) {
+    const w = 18 + String(collapsedReports).length * 8;
+    const px = r.x + r.width / 2 - w / 2, py = r.y + r.height - 11;
+    out += `<rect x="${n2(px)}" y="${py}" width="${w}" height="22" rx="11" fill="${T.paper}" stroke="${T.hairline}"/><text x="${n2(r.x + r.width / 2)}" y="${py + 15}" font-size="11.5" font-weight="600" fill="${T.ink}" text-anchor="middle">+${collapsedReports}</text>`;
+  }
+  return out;
+}
+
 function shape(doc: VisualisationIR, n: IRNode, r: Rect): string {
   const colour = T.colours[getColor(n)];
   const hasColour = getColor(n) !== "default";
@@ -43,6 +72,7 @@ function shape(doc: VisualisationIR, n: IRNode, r: Rect): string {
   const label = (rows: string[], extra = {}) => lines(cx, blockTop(r, rows.length), rows, extra);
 
   if (doc.type === "timeline") return ""; // timeline cards are drawn by drawTimeline
+  if (doc.type === "orgchart") return person(n, r, getExtras(n).collapsed ? doc.edges.filter((e) => e.source === n.id).length : 0);
 
   switch (n.type) {
     case "decision": {
@@ -72,13 +102,24 @@ function shape(doc: VisualisationIR, n: IRNode, r: Rect): string {
   }
 }
 
+/** Reporting line: down from the bottom of a manager, across, and down into the top of a report, with rounded corners. */
+function orgGeometry(a: Rect, b: Rect): { path: string; to: { x: number; y: number }; tip: { x: number; y: number }; mid: { x: number; y: number } } {
+  const x1 = a.x + a.width / 2, y1 = a.y + a.height, x2 = b.x + b.width / 2, y2 = b.y;
+  const my = y1 + (y2 - y1) / 2;
+  const r = Math.min(12, Math.abs(x2 - x1) / 2, (y2 - y1) / 4);
+  const dir = x2 >= x1 ? 1 : -1;
+  const path = x1 === x2 ? `M${n2(x1)} ${n2(y1)} V${n2(y2)}` : `M${n2(x1)} ${n2(y1)} V${n2(my - r)} Q${n2(x1)} ${n2(my)} ${n2(x1 + dir * r)} ${n2(my)} H${n2(x2 - dir * r)} Q${n2(x2)} ${n2(my)} ${n2(x2)} ${n2(my + r)} V${n2(y2)}`;
+  return { path, to: { x: x2, y: y2 }, tip: { x: 0, y: 1 }, mid: { x: (x1 + x2) / 2, y: my } };
+}
+
 function drawEdges(doc: VisualisationIR, nodes: Map<string, IRNode>, hidden: Set<string>): string {
   const out: string[] = [];
   for (const e of doc.edges) {
     const a = nodes.get(e.source), b = nodes.get(e.target);
     if (!a || !b || hidden.has(a.id) || hidden.has(b.id)) continue;
-    const g = edgeGeometry(rectOf(a), rectOf(b));
-    const colour = doc.type === "mindmap" ? T.colours[getColor(b) === "default" ? "grey" : getColor(b)] : T.muted;
+    const org = doc.type === "orgchart";
+    const g = org ? orgGeometry(rectOf(a), rectOf(b)) : edgeGeometry(rectOf(a), rectOf(b));
+    const colour = doc.type === "mindmap" ? T.colours[getColor(b) === "default" ? "grey" : getColor(b)] : org ? T.control : T.muted;
     const width = doc.type === "mindmap" ? 2.2 : 1.6;
     let svg = `<g data-edge="${esc(e.id)}"><path d="${g.path}" fill="none" stroke="${colour}" stroke-width="${width}" stroke-linecap="round"/>`;
     if (isDirected(e, doc.type)) {
@@ -177,7 +218,7 @@ export function renderDiagramSvg(input: VisualisationIR): SvgResult {
           const x = lanes.horizontal ? a0 : b.start, y = lanes.horizontal ? b.start : a0;
           const w = lanes.horizontal ? len : b.size, h = lanes.horizontal ? b.size : len;
           const fill = b.index % 2 === 0 ? T.desk : tint(T.hairline, 0.7);
-          const label = esc(b.name.length > 28 ? `${b.name.slice(0, 27)}…` : b.name);
+          const label = esc(b.name.length > 16 ? `${b.name.slice(0, 15)}…` : b.name);
           return `<g data-lane="${esc(b.name)}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${T.hairline}"/><text x="${x + 12}" y="${y + 20}" font-size="12.5" font-weight="600" fill="${T.ink}">${label}</text></g>`;
         })
         .join("");

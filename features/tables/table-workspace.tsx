@@ -80,7 +80,7 @@ export function TableCentre({ doc, update, onAddData }: { doc: VisualisationIR; 
                 const active = config.sort?.key === c.key;
                 return (
                   <th key={c.key} scope="col" aria-sort={active ? (config.sort!.dir === "asc" ? "ascending" : "descending") : "none"} className={cn("border-b border-border px-3 py-2 font-semibold", c.type === "number" ? "text-right" : "text-left")}>
-                    <button type="button" onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 rounded-sm hover:text-primary-text">
+                    <button type="button" onClick={() => toggleSort(c.key)} className={cn("inline-flex items-center gap-1 rounded-sm hover:text-primary-text", active && "text-primary-text")}>
                       {c.label}
                       {active && (config.sort!.dir === "asc" ? <ArrowUp className="size-3.5" aria-hidden="true" /> : <ArrowDown className="size-3.5" aria-hidden="true" />)}
                       <span className="sr-only">, sort</span>
@@ -92,7 +92,7 @@ export function TableCentre({ doc, update, onAddData }: { doc: VisualisationIR; 
           </thead>
           <tbody>
             {slice.map((r, i) => (
-              <tr key={current * config.pageSize + i} className="odd:bg-card even:bg-surface/50">
+              <tr key={current * config.pageSize + i} className="odd:bg-card even:bg-surface/50 hover:bg-accent/70">
                 <td className={cn("text-right text-xs tabular-nums text-muted-foreground", pad)}>{current * config.pageSize + i + 1}</td>
                 {view.columns.map((c) => {
                   const f = config.formats[c.key];

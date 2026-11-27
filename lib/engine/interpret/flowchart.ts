@@ -50,17 +50,18 @@ interface Tail {
   label?: string;
 }
 
-const LANE_TAG = /\s*\[([^\]\n]{1,60})\]\s*$/;
+const LANE_TAG = /\s*\[([^\]\n]{1,60})\]/g;
 
 export function interpretFlowchart(inputLines: readonly Line[], title: string): { graph: SemanticGraph; warnings: Warning[] } {
   // A trailing [Name] puts that line's steps in a swimlane, as dates and [Team] work on timelines.
-  const laneByLine = new Map<number, string>();
+  // Tags may sit anywhere in the line and are always removed from the text. With one tag the whole line is in that lane;
+  // on an "if … otherwise …" line, the first tag places the question and its "yes", and the last tag places the "no".
+  const laneByLine = new Map<number, { first: string; last: string }>();
   const lines: Line[] = inputLines.map((l) => {
-    const m = LANE_TAG.exec(l.text);
-    const name = m?.[1]?.replace(/\s+/g, " ").trim();
-    if (!m || !name) return l;
-    laneByLine.set(l.line, name);
-    return { ...l, text: l.text.slice(0, m.index).trim() };
+    const names = [...l.text.matchAll(LANE_TAG)].map((m) => m[1]!.replace(/\s+/g, " ").trim()).filter(Boolean);
+    if (names.length === 0) return l;
+    laneByLine.set(l.line, { first: names[0]!, last: names[names.length - 1]! });
+    return { ...l, text: l.text.replace(LANE_TAG, "").replace(/\s{2,}/g, " ").replace(/\s+([,;.])/g, "$1").trim() };
   });
   const g = new GraphBuilder();
   const segs = segmentLines(lines);
@@ -139,7 +140,7 @@ export function interpretFlowchart(inputLines: readonly Line[], title: string): 
   for (let i = 0; i < segs.length; i++) {
     const seg = segs[i]!;
     const text = seg.text;
-    g.lane = laneByLine.get(seg.line);
+    g.lane = laneByLine.get(seg.line)?.first;
 
     if (seg.yesno) {
       if (!pendingDecision) {
@@ -204,6 +205,8 @@ export function interpretFlowchart(inputLines: readonly Line[], title: string): 
   function wireDecision(id: string, b: { yes?: string; no?: string }, line: number) {
     const tails: Tail[] = [];
     const place = (which: "Yes" | "No", text: string | undefined) => {
+      const tags = laneByLine.get(line);
+      g.lane = which === "No" ? tags?.last : tags?.first;
       if (!text) {
         tails.push({ id, label: which });
         return;
@@ -259,7 +262,7 @@ export function interpretFlowchart(inputLines: readonly Line[], title: string): 
   g.lane = undefined;
 
   // Swimlanes need at least two lanes to mean anything. Start and End join the lane of the step beside them.
-  const lanes = uniqueNames(laneByLine.values());
+  const lanes = uniqueNames([...laneByLine.values()].flatMap((t) => (t.first === t.last ? [t.first] : [t.first, t.last])));
   if (lanes.length === 1) {
     g.warn("one-lane", `Only one lane (“${lanes[0]}”) was named, so swimlanes were not drawn. Name at least two, for example [Customer] and [Support].`, undefined, "info");
     for (const i of g.items) delete i.lane;

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  COLOR_KEYS, COLOR_LABEL, COLOR_VAR, MAX_LANES, NODE_KINDS, addLane, assignLane, canDelete, moveLane, readLanes, removeLane, renameLane, setLanes, canMoveEvent, connect, deleteEdges, getColor, getExtras, mindTree, moveEvent, moveSibling, reparent,
+  COLOR_KEYS, COLOR_LABEL, COLOR_VAR, MAX_LANES, NODE_KINDS, isTreeType, addLane, assignLane, canDelete, moveLane, readLanes, removeLane, renameLane, setLanes, canMoveEvent, connect, deleteEdges, getColor, getExtras, mindTree, moveEvent, moveSibling, reparent,
   reparentTargets, reverseEdge, setStyle, toggleCollapse, updateEdge, updateNode,
   type ColorKey,
 } from "@/lib/engine";
@@ -173,7 +173,7 @@ function NodeForm({ node, doc, update, session }: { node: IRNode; doc: Visualisa
   const ex = getExtras(node);
   const type = doc.type;
   const kinds = type === "flowchart" || type === "timeline" ? NODE_KINDS[type] : [];
-  const tree = type === "mindmap" ? mindTree(doc) : undefined;
+  const tree = isTreeType(type) ? mindTree(doc) : undefined;
   const key = (f: string): UpdateOptions => ({ coalesceKey: `${f}:${node.id}` });
   const moveBlocked = (d: -1 | 1) => (type === "timeline" ? canMoveEvent(doc, node.id, d) : { ok: false });
   const earlier = moveBlocked(-1), later = moveBlocked(1);
@@ -182,10 +182,10 @@ function NodeForm({ node, doc, update, session }: { node: IRNode; doc: Visualisa
 
   return (
     <div className="grid gap-5">
-      <Field label="Text" htmlFor={`${id}-l`}>
+      <Field label={type === "orgchart" ? "Name" : "Text"} htmlFor={`${id}-l`}>
         <RequiredTextArea id={`${id}-l`} value={node.label} onCommit={(v) => update((d) => updateNode(d, node.id, { label: v }), key("label"))} />
       </Field>
-      <Field label="Description" htmlFor={`${id}-d`} hint={type === "timeline" ? "Shown on the event card." : "Notes kept with this item."}>
+      <Field label={type === "orgchart" ? "Role or title" : "Description"} htmlFor={`${id}-d`} hint={type === "timeline" ? "Shown on the event card." : type === "orgchart" ? "Shown under the name on the card." : "Notes kept with this item."}>
         <Textarea id={`${id}-d`} rows={3} value={ex.description ?? ""} maxLength={2000} onChange={(e) => update((d) => updateNode(d, node.id, { description: e.target.value }), key("desc"))} />
       </Field>
 
@@ -224,7 +224,7 @@ function NodeForm({ node, doc, update, session }: { node: IRNode; doc: Visualisa
         </>
       )}
 
-      {type === "mindmap" && tree && (
+      {isTreeType(type) && tree && (
         <>
           {node.id !== tree.rootId && (
             <Field label="Move under…" htmlFor={`${id}-p`} hint={parent ? `Currently under “${tree.byId.get(parent)?.label}”.` : undefined}>
@@ -243,7 +243,7 @@ function NodeForm({ node, doc, update, session }: { node: IRNode; doc: Visualisa
             )}
             {(tree.children.get(node.id)?.length ?? 0) > 0 && (
               <Button variant="outline" size="sm" onClick={() => update((d) => toggleCollapse(d, node.id))}>
-                {ex.collapsed ? <ChevronRight aria-hidden="true" /> : <ChevronDown aria-hidden="true" />} {ex.collapsed ? "Expand" : "Collapse"} branch
+                {ex.collapsed ? <ChevronRight aria-hidden="true" /> : <ChevronDown aria-hidden="true" />} {ex.collapsed ? "Expand" : "Collapse"} {type === "orgchart" ? "team" : "branch"}
               </Button>
             )}
           </ButtonRow>
@@ -254,7 +254,7 @@ function NodeForm({ node, doc, update, session }: { node: IRNode; doc: Visualisa
 
       <ButtonRow>
         <Button variant="outline" size="sm" onClick={() => session.addChildOf(node.id)}>
-          {type === "mindmap" ? "Add child branch" : type === "timeline" ? "Add event after" : "Add connected item"}
+          {type === "mindmap" ? "Add child branch" : type === "orgchart" ? "Add a report" : type === "timeline" ? "Add event after" : "Add connected item"}
         </Button>
         <Button variant="outline" size="sm" onClick={session.duplicate}><Copy aria-hidden="true" /> Duplicate</Button>
         <Button variant="destructive" size="sm" disabled={!canDelete(doc, [node.id])} onClick={session.remove}><Trash2 aria-hidden="true" /> Delete</Button>

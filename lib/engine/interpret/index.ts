@@ -6,6 +6,7 @@ import { interpretFlowchart } from "./flowchart";
 import { GraphBuilder } from "./graph-builder";
 import { parseLines } from "./lines";
 import { interpretMindmap } from "./mindmap";
+import { interpretOrgChart } from "./orgchart";
 import { findRequest } from "./prompt";
 import { interpretTimeline } from "./timeline";
 import { MAX_INPUT_CHARS, type Detection, type InterpretOptions, type Interpretation, type Warning } from "./types";
@@ -13,7 +14,7 @@ import { MAX_INPUT_CHARS, type Detection, type InterpretOptions, type Interpreta
 export * from "./types";
 export { findRequest } from "./prompt";
 
-const TYPE_NAME: Record<EngineType, string> = { flowchart: "flowchart", mindmap: "mind map", conceptmap: "concept map", timeline: "timeline" };
+const TYPE_NAME: Record<EngineType, string> = { flowchart: "flowchart", mindmap: "mind map", orgchart: "org chart", conceptmap: "concept map", timeline: "timeline" };
 
 /**
  * Deterministic, rule-based interpretation. It reads structure that is
@@ -49,12 +50,12 @@ export function interpret(input: string, options: InterpretOptions = {}): Interp
   let result: { graph: Interpretation["graph"]; warnings: Warning[] };
   if (requestOnly) {
     const g = new GraphBuilder();
-    if (type === "mindmap" && request?.topic) g.add({ kind: "topic", label: request.topic });
+    if ((type === "mindmap" || type === "orgchart") && request?.topic) g.add({ kind: "topic", label: request.topic });
     g.warn(
       "request-only",
       `Vizora's rule-based engine structures text you provide; it does not write content for you. It created an empty ${TYPE_NAME[type]}${title ? ` called “${title}”` : ""}. Paste or type the steps, outline, dates or relationships and generate again, or build it by hand.`,
     );
-    result = { graph: g.graph(type, title || fallbackTitle, { algorithm: type === "mindmap" ? "tree" : type === "timeline" ? "linear" : "layered" }), warnings: g.warnings };
+    result = { graph: g.graph(type, title || fallbackTitle, { algorithm: type === "mindmap" || type === "orgchart" ? "tree" : type === "timeline" ? "linear" : "layered" }), warnings: g.warnings };
   } else {
     switch (type) {
       case "flowchart":
@@ -62,6 +63,9 @@ export function interpret(input: string, options: InterpretOptions = {}): Interp
         break;
       case "mindmap":
         result = interpretMindmap(content, { topic: request?.topic, title: title || fallbackTitle });
+        break;
+      case "orgchart":
+        result = interpretOrgChart(content, { topic: request?.topic, title: title || fallbackTitle });
         break;
       case "conceptmap":
         result = interpretConcept(content, { title: title || fallbackTitle, entities: request?.entities });

@@ -29,6 +29,7 @@ const isDefaultView = (v: { x: number; y: number; zoom: number }) => v.x === 0 &
 const EMPTY_COPY = {
   flowchart: "This flowchart is empty. Add a step, or paste text into the Source panel and generate.",
   mindmap: "This mind map is empty. Add a central topic to begin.",
+  orgchart: "This org chart is empty. Add the head of the organisation, then add the people who report to them, or paste an indented list into the Source panel.",
   conceptmap: "This concept map is empty. Add a concept, then connect concepts to describe how they relate.",
   timeline: "This timeline is empty. Add an event, or paste dated lines into the Source panel.",
 } as const;
@@ -167,7 +168,7 @@ export function EngineCanvas() {
           <div className="pointer-events-auto max-w-sm rounded-card border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">{EMPTY_COPY[doc.type as keyof typeof EMPTY_COPY]}</p>
             <Button className="mt-4" size="sm" onClick={ed.addFirst}>
-              <Plus aria-hidden="true" /> {doc.type === "mindmap" ? "Add central topic" : doc.type === "timeline" ? "Add event" : doc.type === "conceptmap" ? "Add concept" : "Add step"}
+              <Plus aria-hidden="true" /> {doc.type === "mindmap" ? "Add central topic" : doc.type === "orgchart" ? "Add head of organisation" : doc.type === "timeline" ? "Add event" : doc.type === "conceptmap" ? "Add concept" : "Add step"}
             </Button>
           </div>
         </div>

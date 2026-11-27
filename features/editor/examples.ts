@@ -38,6 +38,19 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
   - Partners`,
   },
   {
+    id: "team",
+    label: "Org chart for a product team",
+    type: "orgchart",
+    text: `Create an org chart for the product team
+Maya Chen - Head of Product
+  Ravi Patel - Design Lead
+    Sam Ortiz - Product Designer
+    Lena Fischer - UX Researcher
+  Tom Becker - Engineering Manager
+    Aisha Khan - Senior Engineer
+    Jon Smith - Engineer`,
+  },
+  {
     id: "ux",
     label: "Stages of UX research",
     type: "flowchart",

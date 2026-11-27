@@ -67,6 +67,9 @@ Text colours, ochre-on-tint, semantic colours and form-control borders (3:1) are
 ## Number tiles, Gantt and swimlanes
 Number tiles and the Gantt schedule are chart kinds (`kpi`, `gantt`), so they import, filter, export and sit on dashboards like any chart; "Add number tile" on a dashboard starts one from the first real measure. A number tile compares the latest month or year with the one before. The Gantt chart takes a task column plus start and end date columns (optionally coloured by group); it has no task dependencies. Swimlanes divide a flowchart into lanes (see `docs/engine.md`).
 
+## Org charts
+An `orgchart` visualisation is a top-down tree of people (`lib/engine/layout/org.ts`). Text like `Ada Lovelace - CEO` with indentation for reporting lines is read by the rule-based interpreter (also `Name (Role)` and `Name, Role`); "org chart" in the text selects the type, it is never guessed from an outline alone. It shares the mind map's tree editing (add report, move under, fold a team, delete with everyone beneath) and converts to and from a mind map.
+
 ## Table view
 A `table` visualisation shows a dataset as a sortable, searchable, paged table: choose and reorder columns, set a default sort, filter rows (same filters as charts), shade numeric columns with a colour scale or data bars. Settings live in `configuration.options.table` (`lib/tables`). Exports: CSV exactly as configured (every matching row), and an image (SVG, PNG, HTML embed) of the first 40 rows and 12 columns. Tables are not dashboard tiles yet.
 

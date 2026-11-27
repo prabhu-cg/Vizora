@@ -11,7 +11,7 @@ export const AVAILABILITY_LABEL: Record<Availability, string> = {
   planned: "Planned",
 };
 
-export type VisualKind = "flowchart" | "mindmap" | "conceptmap" | "timeline" | "chart" | "dashboard";
+export type VisualKind = "flowchart" | "mindmap" | "orgchart" | "conceptmap" | "timeline" | "chart" | "dashboard";
 
 export interface Capability {
   id: string;
@@ -54,6 +54,20 @@ export const CAPABILITIES: Capability[] = [
       "Colour categories assigned per branch, which you can change",
     ],
     next: ["Dragging a branch onto a new parent (today you choose the new parent in the Inspector)"],
+  },
+  {
+    id: "orgcharts",
+    title: "Org charts",
+    status: "available",
+    visual: "orgchart",
+    summary: "Show who reports to whom, as a top-down chart of people and teams.",
+    today: [
+      "Type or paste an indented list such as “Ada Lovelace - CEO”, and indentation becomes who reports to whom",
+      "Each person is a card with their initials, name and role; the head of the organisation stands out",
+      "Fold a team away to a count, add reports under anyone, move a person under a different manager, and reorder peers",
+      "Colour a person to set them apart, and export the chart as PNG, SVG or an embeddable page",
+    ],
+    next: ["Dragging a person onto a new manager (today you choose the manager in the Inspector)", "Photos or profile links on cards"],
   },
   {
     id: "conceptmaps",

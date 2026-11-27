@@ -6,6 +6,7 @@ import { forceLayout } from "./force";
 import { layeredLayout, type LNode } from "./layered";
 import { measureNode } from "./size";
 import { timelineLayout, type TimelineLayout } from "./timeline";
+import { orgLayout } from "./org";
 import { treeLayout } from "./tree";
 
 export { measureNode } from "./size";
@@ -39,11 +40,12 @@ export function applyLayout(input: VisualisationIR): VisualisationIR {
   let positions = new Map<string, { x: number; y: number }>();
 
   switch (doc.type) {
-    case "mindmap": {
+    case "mindmap":
+    case "orgchart": {
       const tree = mindTree(doc);
       const collapsed = new Set(doc.nodes.filter((n) => getExtras(n).collapsed).map((n) => n.id));
       if (tree.rootId) {
-        const r = treeLayout(ln, tree.children, tree.rootId, collapsed, gap);
+        const r = (doc.type === "orgchart" ? orgLayout : treeLayout)(ln, tree.children, tree.rootId, collapsed, gap);
         positions = r.positions;
         // Place stray nodes (no path to root) below the map so nothing overlaps.
         const maxY = Math.max(0, ...[...r.positions.entries()].map(([id, p]) => p.y + (doc.nodes.find((n) => n.id === id)?.size?.height ?? 0)));

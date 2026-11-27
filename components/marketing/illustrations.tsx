@@ -77,6 +77,27 @@ export function MindmapVisual(props: P) {
   );
 }
 
+export function OrgchartVisual(props: P) {
+  const elbow = (x1: number, y1: number, x2: number, y2: number) => `M${x1} ${y1} V${(y1 + y2) / 2} H${x2} V${y2}`;
+  const people: [number, number, string][] = [[46, 60, "Design"], [120, 60, "Eng"], [194, 60, "Growth"]];
+  const reports: [number, number][] = [[26, 108], [66, 108]];
+  return (
+    <Svg {...props}>
+      {people.map(([x, y]) => <path key={x} d={elbow(120, 38, x, y - 11)} fill="none" className="stroke-border-strong" strokeWidth={1.6} />)}
+      {reports.map(([x, y]) => <path key={x} d={elbow(46, 71, x, y - 10)} fill="none" className="stroke-border-strong" strokeWidth={1.6} />)}
+      <rect x="92" y="12" width="56" height="26" rx="8" className={ACCENT} />
+      <text x="120" y="29" textAnchor="middle" className="fill-primary-foreground text-[10px]">Head</text>
+      {people.map(([x, y, label]) => (
+        <g key={label}>
+          <rect x={x - 28} y={y - 11} width="56" height="22" rx="8" className={BOX} />
+          <text x={x} y={y + 3} textAnchor="middle" className={TXT}>{label}</text>
+        </g>
+      ))}
+      {reports.map(([x, y]) => <rect key={x} x={x - 18} y={y - 10} width="36" height="20" rx="7" className={BOX} />)}
+    </Svg>
+  );
+}
+
 export function ConceptmapVisual(props: P) {
   return (
     <Svg {...props}>
@@ -173,6 +194,7 @@ export function DashboardVisual(props: P) {
 const VISUALS: Record<VisualKind, (p: P) => React.JSX.Element> = {
   flowchart: FlowchartVisual,
   mindmap: MindmapVisual,
+  orgchart: OrgchartVisual,
   conceptmap: ConceptmapVisual,
   timeline: TimelineVisual,
   chart: ChartVisual,
@@ -182,6 +204,7 @@ const VISUALS: Record<VisualKind, (p: P) => React.JSX.Element> = {
 const LABELS: Record<VisualKind, string> = {
   flowchart: "Illustration of a flowchart with a decision step",
   mindmap: "Illustration of a mind map branching from one topic",
+  orgchart: "Illustration of an org chart with one head, three managers and two reports",
   conceptmap: "Illustration of a concept map with labelled links",
   timeline: "Illustration of a timeline with five milestones",
   chart: "Illustration of a bar and line chart",

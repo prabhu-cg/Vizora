@@ -149,8 +149,11 @@ export function planConversion(doc: VisualisationIR, to: EngineType): Conversion
     return done(changes, finish(doc, to, nodes, edges, { direction: doc.layout.direction === "LR" ? "LR" : "TB", algorithm: to === "conceptmap" && doc.edges.length ? "layered" : "layered" }));
   }
 
-  // ── anything → mind map
-  if (to === "mindmap") {
+  // ── anything → mind map or org chart (both are trees)
+  if (to === "mindmap" || to === "orgchart") {
+    const org = to === "orgchart";
+    const head = org ? "the head of the organisation" : "the central topic";
+    const unit = org ? "person or team" : "branch";
     let nodes: IRNode[];
     let edges: IREdge[];
     let rootId: string;
@@ -159,8 +162,8 @@ export function planConversion(doc: VisualisationIR, to: EngineType): Conversion
       nodes = [root, ...doc.nodes.map((n) => reKind(n, to, from))];
       edges = doc.nodes.map((n) => ({ id: createId(), source: root.id, target: n.id, data: { directed: false } }));
       rootId = root.id;
-      changes.push({ text: `A central topic named “${doc.title}” is added, with each event as a branch in time order.`, severity: "info" });
-      changes.push({ text: "Dates are kept with each event but not shown on a mind map.", severity: "loss" });
+      changes.push({ text: `A box named “${doc.title}” is added as ${head}, with each event as a ${unit} in time order.`, severity: "info" });
+      changes.push({ text: `Dates are kept with each event but not shown on ${org ? "an org chart" : "a mind map"}.`, severity: "loss" });
     } else {
       const t = treeFromGraph(doc);
       const hasIn = new Set(doc.edges.map((e) => e.target));
@@ -170,13 +173,13 @@ export function planConversion(doc: VisualisationIR, to: EngineType): Conversion
         rootId = treeRoots[0]!.id;
         nodes = doc.nodes.map((n) => (n.id === rootId ? { ...reKind(n, to, from), type: "topic" } : reKind(n, to, from)));
         edges = t.edges.map((e) => ({ id: e.id, source: e.source, target: e.target, data: { directed: false } }));
-        changes.push({ text: `“${labelOf(rootId)}” becomes the central topic.`, severity: "info" });
+        changes.push({ text: `“${labelOf(rootId)}” becomes ${head}.`, severity: "info" });
       } else {
         const root: IRNode = { id: createId(), type: "topic", label: doc.title, position: { x: 0, y: 0 }, data: { structural: true } };
         rootId = root.id;
         nodes = [root, ...doc.nodes.map((n) => reKind(n, to, from))];
         edges = [...treeRoots.map((r) => ({ id: createId(), source: root.id, target: r.id, data: { directed: false } })), ...t.edges.map((e) => ({ id: e.id, source: e.source, target: e.target, data: { directed: false } }))];
-        changes.push({ text: `Your ${plural(treeRoots.length, "separate group")} are not connected, so a central topic named “${doc.title}” is added and each group becomes a branch.`, severity: "info" });
+        changes.push({ text: `Your ${plural(treeRoots.length, "separate group")} are not connected, so a box named “${doc.title}” is added as ${head} and each group becomes a ${unit}.`, severity: "info" });
       }
       void sourcesList;
       // Edge labels live on the child so they survive and can be restored.
@@ -189,11 +192,12 @@ export function planConversion(doc: VisualisationIR, to: EngineType): Conversion
       }
       if (from === "flowchart") changes.push({ text: "Decision branches and their Yes/No meaning are flattened into a hierarchy.", severity: "loss" });
     }
-    return done(changes, finish(doc, to, colourBranches(nodes, edges, rootId), edges));
+    // Org charts are not colour-coded by family, so any colours from a mind map are cleared.
+    return done(changes, finish(doc, to, org ? nodes.map((n) => withColor(n, "default")) : colourBranches(nodes, edges, rootId), edges));
   }
 
-  // ── mind map → graph
-  if (from === "mindmap") {
+  // ── mind map or org chart → graph
+  if (from === "mindmap" || from === "orgchart") {
     const tree = mindTree(doc);
     const nodes = doc.nodes.map((n) => {
       const k = reKind(n, to, from);

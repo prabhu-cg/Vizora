@@ -3,7 +3,7 @@ import { connectionSides, rectOf } from "@/lib/engine/edges";
 import { laneGeometry, timelineGeometry, withLanePositions } from "@/lib/engine";
 import { hiddenNodeIds } from "@/lib/engine/ops";
 import { mindTree } from "@/lib/engine/mindmap-tree";
-import { COLOR_VAR, getColor, isDirected, isEngineType } from "@/lib/engine/semantics";
+import { COLOR_VAR, getColor, isDirected, isEngineType, isTreeType } from "@/lib/engine/semantics";
 import type { VisualisationIR } from "@/types/visualisation";
 import type { Selection } from "./context";
 
@@ -50,7 +50,7 @@ export function toFlow(
   const hidden = hiddenNodeIds(doc);
   const selectedNodes = new Set(selection.nodes);
   const selectedEdges = new Set(selection.edges);
-  const tree = doc.type === "mindmap" ? mindTree(doc) : undefined;
+  const tree = isTreeType(doc.type) ? mindTree(doc) : undefined;
   const geo = doc.type === "timeline" ? timelineGeometry(doc) : undefined;
   const rootRect = tree?.rootId ? rectOf(tree.byId.get(tree.rootId)!) : undefined;
   const draggable = doc.type === "flowchart" || doc.type === "conceptmap";
@@ -122,14 +122,17 @@ export function toFlow(
       const ra = { ...rectOf(a), ...(overrides[a.id] ?? {}) };
       const rb = { ...rectOf(b), ...(overrides[b.id] ?? {}) };
       const sides = connectionSides(ra, rb);
+      const org = doc.type === "orgchart";
+      // In swimlanes the flow runs one way, so connect side to side (or top to bottom) with elbows instead of arcs across lanes.
+      const laneFlow = lanes && (lanes.horizontal ? rb.x >= ra.x + ra.width : rb.y >= ra.y + ra.height);
       const colourKey = doc.type === "mindmap" ? getColor(b) : "default";
-      const colour = doc.type === "mindmap" ? COLOR_VAR[colourKey === "default" ? "grey" : colourKey] : "var(--muted-foreground)";
+      const colour = doc.type === "mindmap" ? COLOR_VAR[colourKey === "default" ? "grey" : colourKey] : org ? "var(--input)" : "var(--muted-foreground)";
       edges.push({
         id: e.id,
         source: e.source,
         target: e.target,
-        sourceHandle: sides.source,
-        targetHandle: sides.target,
+        // Reporting lines run from the bottom of a manager to the top of each report, with rounded elbows.
+        ...(org ? { type: "smoothstep", sourceHandle: "bottom", targetHandle: "top", pathOptions: { borderRadius: 12 } } : laneFlow ? { type: "smoothstep", sourceHandle: lanes!.horizontal ? "right" : "bottom", targetHandle: lanes!.horizontal ? "left" : "top", pathOptions: { borderRadius: 10 } } : { sourceHandle: sides.source, targetHandle: sides.target }),
         label: e.label,
         selected: selectedEdges.has(e.id),
         ariaLabel: `${e.label ? `${e.label}: ` : ""}${a.label} to ${b.label}`,

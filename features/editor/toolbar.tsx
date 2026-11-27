@@ -6,7 +6,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/input";
-import { canDelete, NODE_KINDS, resetLayout, setAllCollapsed, setLayout } from "@/lib/engine";
+import { canDelete, isTreeType, NODE_KINDS, resetLayout, setAllCollapsed, setLayout } from "@/lib/engine";
 import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import type { VisualisationIR } from "@/types/visualisation";
 import { PanelControls } from "@/components/workspace/workspace-frame";
@@ -97,10 +97,10 @@ export function EditorToolbar({
           </DropdownMenu>
         ) : (
           <Button variant="outline" size="sm" onClick={() => (doc.nodes.length === 0 ? session.addFirst() : session.add())}>
-            <Plus aria-hidden="true" /> {doc.type === "mindmap" ? (doc.nodes.length === 0 ? "Central topic" : "Branch") : "Concept"}
+            <Plus aria-hidden="true" /> {doc.type === "mindmap" ? (doc.nodes.length === 0 ? "Central topic" : "Branch") : doc.type === "orgchart" ? (doc.nodes.length === 0 ? "Head of organisation" : "Person") : "Concept"}
           </Button>
         )}
-        {doc.type === "mindmap" && doc.nodes.length > 0 && (
+        {isTreeType(doc.type) && doc.nodes.length > 0 && (
           <Button variant="ghost" size="sm" onClick={session.addSibling} disabled={sel.nodes.length !== 1}>
             Sibling
           </Button>
@@ -141,7 +141,7 @@ export function EditorToolbar({
             <option value="TB">Vertical</option>
           </Select>
         )}
-        {doc.type === "mindmap" && (
+        {isTreeType(doc.type) && (
           <>
             <IconButton label="Expand all branches" onClick={() => update((d) => setAllCollapsed(d, false))}>
               <ChevronsUpDown aria-hidden="true" />

@@ -19,7 +19,7 @@ const MIN_BAND = 120;
 const SLOT_GAP = 18;
 const ALONG_GAP = 28;
 /** How far the bands extend beyond the first and last step, along the flow. */
-export const LANE_MARGIN = 60;
+export const LANE_MARGIN = 140;
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim().slice(0, LANE_NAME_MAX);
 

@@ -121,7 +121,7 @@ describe("pricing honesty", () => {
 describe("no misleading claims", () => {
   it("exactly what is built is marked available", () => {
     const available = [...CAPABILITIES, ...WORKSPACE_FEATURES].filter((c) => c.status === "available").map((c) => c.id).sort();
-    expect(available).toEqual(["charts", "conceptmaps", "dashboards", "diagrams", "editing", "exporting", "generation", "mindmaps", "projects", "timelines"]);
+    expect(available).toEqual(["charts", "conceptmaps", "dashboards", "diagrams", "editing", "exporting", "generation", "mindmaps", "orgcharts", "projects", "timelines"]);
   });
   it("never claims AI: generation is described as rule-based and AI stays under 'not built'", () => {
     const gen = WORKSPACE_FEATURES.find((c) => c.id === "generation")!;

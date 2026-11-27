@@ -25,6 +25,7 @@ export const FEATURE_CATALOGUE = {
   "export.png": { label: "PNG export", minPlan: "FREE", released: true },
   "engine.interpret": { label: "Text-to-visual (rule-based)", minPlan: "FREE", released: true },
   "visualisation.mindmap": { label: "Mind maps", minPlan: "FREE", released: true },
+  "visualisation.orgchart": { label: "Org charts", minPlan: "FREE", released: true },
   "visualisation.conceptmap": { label: "Concept maps", minPlan: "FREE", released: true },
   "visualisation.timeline": { label: "Timelines", minPlan: "FREE", released: true },
   "backup.local": { label: "Local backup & restore", minPlan: "FREE", released: true },

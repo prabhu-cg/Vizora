@@ -8,5 +8,5 @@ export function hasRenderer(type: VisualisationType): boolean {
 
 /** Types a person can create today, in the order they are offered. */
 export function creatableTypes(): VisualisationType[] {
-  return ["flowchart", "mindmap", "conceptmap", "timeline", "chart", "table", "dashboard"];
+  return ["flowchart", "mindmap", "orgchart", "conceptmap", "timeline", "chart", "table", "dashboard"];
 }

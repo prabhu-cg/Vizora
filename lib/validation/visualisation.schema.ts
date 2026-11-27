@@ -23,6 +23,7 @@ export const jsonRecordSchema = z.preprocess(dropUndefined, z.record(z.string(),
 export const VISUALISATION_TYPES = [
   "flowchart",
   "mindmap",
+  "orgchart",
   "conceptmap",
   "timeline",
   "chart",

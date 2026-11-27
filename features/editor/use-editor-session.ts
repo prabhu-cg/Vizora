@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addNode, assignLane, canDelete, deleteEdges, deleteNodes, duplicateNodes, moveNodes, connect, toggleCollapse, updateNode } from "@/lib/engine";
+import { addNode, assignLane, canDelete, isTreeType, deleteEdges, deleteNodes, duplicateNodes, moveNodes, connect, toggleCollapse, updateNode } from "@/lib/engine";
 import { mindTree } from "@/lib/engine/mindmap-tree";
 import type { UpdateOptions } from "@/features/visualisation/use-visualisation-editor";
 import type { IRViewport, VisualisationIR } from "@/types/visualisation";
@@ -51,13 +51,13 @@ export function useEditorSession(doc: VisualisationIR, update: Update) {
     [apply, focusNew],
   );
 
-  const addFirst = useCallback(() => add(docRef.current.type === "mindmap" ? "topic" : undefined, undefined), [add]);
+  const addFirst = useCallback(() => add(isTreeType(docRef.current.type) ? "topic" : undefined, undefined), [add]);
   const addChildOf = useCallback((id: string) => add(undefined, id), [add]);
 
   const addSibling = useCallback(() => {
     const id = only();
     const d = docRef.current;
-    if (!id || d.type !== "mindmap") return;
+    if (!id || !isTreeType(d.type)) return;
     const parent = mindTree(d).parent.get(id);
     if (parent) add(undefined, parent);
   }, [add]);

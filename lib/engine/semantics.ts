@@ -6,12 +6,15 @@ import type { IREdge, IRNode, VisualisationType } from "@/types/visualisation";
  * renderer-agnostic lives in `node.data`, so every type can carry it and a
  * format switch can keep it even where the new type does not display it.
  */
-export const ENGINE_TYPES = ["flowchart", "mindmap", "conceptmap", "timeline"] as const;
+export const ENGINE_TYPES = ["flowchart", "mindmap", "orgchart", "conceptmap", "timeline"] as const;
 export type EngineType = (typeof ENGINE_TYPES)[number];
 
 export function isEngineType(t: VisualisationType): t is EngineType {
   return (ENGINE_TYPES as readonly string[]).includes(t);
 }
+
+/** Mind maps and org charts are both trees: parent to child edges in sibling order, with a root. */
+export const isTreeType = (t: string): t is "mindmap" | "orgchart" => t === "mindmap" || t === "orgchart";
 
 export type FlowKind = "start" | "end" | "process" | "decision" | "io";
 export type MindKind = "topic" | "branch";
@@ -35,6 +38,10 @@ export const NODE_KINDS: Record<EngineType, KindMeta[]> = {
     { kind: "topic", label: "Central topic" },
     { kind: "branch", label: "Branch" },
   ],
+  orgchart: [
+    { kind: "topic", label: "Head of the organisation" },
+    { kind: "branch", label: "Person or team" },
+  ],
   conceptmap: [{ kind: "concept", label: "Concept" }],
   timeline: [
     { kind: "event", label: "Event" },
@@ -45,6 +52,7 @@ export const NODE_KINDS: Record<EngineType, KindMeta[]> = {
 export const DEFAULT_KIND: Record<EngineType, string> = {
   flowchart: "process",
   mindmap: "branch",
+  orgchart: "branch",
   conceptmap: "concept",
   timeline: "event",
 };
@@ -128,7 +136,7 @@ export function withColor(node: IRNode, color: ColorKey): IRNode {
 
 /** Edges are directed unless explicitly marked otherwise (mind-map links never are). */
 export function isDirected(edge: IREdge, type: VisualisationType): boolean {
-  if (type === "mindmap" || type === "timeline") return false;
+  if (type === "mindmap" || type === "orgchart" || type === "timeline") return false;
   return edge.data?.directed !== false;
 }
 

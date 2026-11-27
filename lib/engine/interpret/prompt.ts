@@ -18,6 +18,7 @@ const VERB = /^(?:please\s+|can you\s+|could you\s+)?(?:(?:i\s+(?:want|need|woul
 
 const TYPE_WORDS: [RegExp, EngineType][] = [
   [/\b(?:flow\s?-?chart|process (?:diagram|map)|workflow|decision tree)\b/i, "flowchart"],
+  [/\borg(?:ani[sz]ation(?:al)?)?\s?-?chart\b|\breporting lines?\b/i, "orgchart"],
   [/\bmind\s?-?map\b/i, "mindmap"],
   [/\bconcept\s?-?map\b/i, "conceptmap"],
   [/\b(?:timeline|roadmap|time line)\b/i, "timeline"],

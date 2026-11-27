@@ -1,8 +1,9 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { initials } from "@/lib/engine/people";
 import { formatDateValue } from "@/lib/engine/interpret/dates";
 import { COLOR_VAR, getColor, getExtras } from "@/lib/engine/semantics";
 import { STEM } from "@/lib/engine/layout/timeline";
@@ -181,6 +182,70 @@ function MindShape({ node, data, selected }: { node: IRNode; data: ItemData; sel
   );
 }
 
+/**
+ * A person (or team) on an org chart: initials, name, and role. The head of the
+ * organisation gets an amber avatar; everyone else a quiet one, or the colour
+ * you chose. Reports can be folded away under a person, with a count.
+ */
+function OrgShape({ node, data, selected }: { node: IRNode; data: ItemData; selected: boolean }) {
+  const { toggleCollapse, addChildOf } = useEditor();
+  const ex = getExtras(node);
+  const colourKey = getColor(node);
+  const root = data.isRoot === true || node.type === "topic";
+  const collapsed = ex.collapsed === true;
+  const count = data.childCount ?? 0;
+  const avatar: React.CSSProperties = root
+    ? { background: "var(--primary)", color: "var(--primary-foreground)" }
+    : colourKey === "default"
+      ? { background: "var(--primary-soft)", color: "var(--primary-text)" }
+      : { background: `color-mix(in srgb, ${COLOR_VAR[colourKey]} 16%, var(--card))`, color: "var(--foreground)", boxShadow: `inset 0 0 0 1.5px ${COLOR_VAR[colourKey]}` };
+  return (
+    <div
+      className={cn(
+        "relative flex size-full items-center gap-3 rounded-[14px] border bg-card px-3 shadow-[0_1px_0_var(--border)]",
+        root ? "border-primary-hover" : "border-border-strong",
+        selected && "ring-2 ring-ring ring-offset-2 ring-offset-background",
+      )}
+    >
+      <span aria-hidden="true" style={avatar} className="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold tracking-wide">
+        {initials(node.label)}
+      </span>
+      <div className="min-w-0 flex-1">
+        <Label node={node} className="!block !text-left font-semibold" />
+        {ex.description && <p className="mt-0.5 line-clamp-2 text-xs leading-[17px] text-muted-foreground">{ex.description}</p>}
+      </div>
+      {count > 0 && (
+        <button
+          type="button"
+          aria-label={`${collapsed ? "Expand" : "Collapse"} team ${node.label}`}
+          aria-expanded={!collapsed}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleCollapse(node.id);
+          }}
+          className="nodrag absolute left-1/2 top-full z-10 flex h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-0.5 rounded-full border border-border-strong bg-card px-1.5 text-[11px] font-semibold tabular-nums text-foreground hover:bg-muted"
+        >
+          {collapsed ? <ChevronDown className="size-3.5" aria-hidden="true" /> : <ChevronUp className="size-3.5" aria-hidden="true" />}
+          {collapsed && <span>{count}</span>}
+        </button>
+      )}
+      {selected && (
+        <button
+          type="button"
+          aria-label={`Add a report under ${node.label}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            addChildOf(node.id);
+          }}
+          className="nodrag absolute left-full top-1/2 ml-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
+        >
+          <Plus className="size-3.5" aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ConceptShape({ node, selected }: { node: IRNode; selected: boolean }) {
   const colourKey = getColor(node);
   return (
@@ -234,6 +299,7 @@ export function ItemNode({ data, selected }: NodeProps) {
     <div className="group size-full">
       {doc.type === "flowchart" && <FlowShape node={d.node} selected={selected} />}
       {doc.type === "mindmap" && <MindShape node={d.node} data={d} selected={selected} />}
+      {doc.type === "orgchart" && <OrgShape node={d.node} data={d} selected={selected} />}
       {doc.type === "conceptmap" && <ConceptShape node={d.node} selected={selected} />}
       {doc.type === "timeline" && <TimelineShape node={d.node} data={d} selected={selected} />}
       <Handles connectable={connectable} />
@@ -258,9 +324,9 @@ export function LaneNode({ data }: NodeProps) {
   return (
     <div
       aria-hidden="true"
-      className={cn("pointer-events-none size-full border-b border-r border-border-strong", d.index % 2 === 0 ? "bg-surface/80" : "bg-muted/60")}
+      className={cn("pointer-events-none size-full border-b border-r border-border-strong", d.index % 2 === 0 ? "bg-surface" : "bg-muted/70")}
     >
-      <span className={cn("absolute left-3 top-2 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-card px-2.5 py-0.5 text-xs font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border-strong)]")}>{d.name}</span>
+      <span className={cn("absolute left-3 top-2 max-w-[7.5rem] truncate rounded-full bg-card px-2.5 py-0.5 text-xs font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--border-strong)]")}>{d.name}</span>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import type { IREdge, IRNode, VisualisationIR } from "@/types/visualisation";
 import { applyLayout, measureNode } from "./layout";
 import { depthOf, descendants, mindTree } from "./mindmap-tree";
 import {
+  isTreeType,
   CATEGORY_CYCLE,
   DEFAULT_KIND,
   NODE_KINDS,
@@ -27,7 +28,7 @@ import { laneAtCross, laneGeometry, laneIndexOf, readLanes } from "./lanes";
  * Mind maps and timelines are laid out automatically after every structural
  * change; flowcharts and concept maps keep the user's manual positions.
  */
-const AUTO: Record<string, boolean> = { mindmap: true, timeline: true };
+const AUTO: Record<string, boolean> = { mindmap: true, orgchart: true, timeline: true };
 const engine = (doc: VisualisationIR): EngineType | undefined => (isEngineType(doc.type) ? doc.type : undefined);
 const sized = (doc: VisualisationIR, n: IRNode): IRNode => (engine(doc) ? { ...n, size: measureNode(engine(doc)!, n) } : n);
 const settle = (doc: VisualisationIR): VisualisationIR => (AUTO[doc.type] ? applyLayout(doc) : doc);
@@ -44,6 +45,10 @@ export const DEFAULT_LABEL: Record<string, string> = {
   event: "New event",
   milestone: "New milestone",
 };
+
+/** Default text for a new tree item: people on an org chart, topics and branches on a mind map. */
+const defaultLabel = (type: EngineType, kind: string): string =>
+  type === "orgchart" ? (kind === "topic" ? "Head of the organisation" : "New person") : (DEFAULT_LABEL[kind] ?? "New item");
 
 export interface AddOptions {
   kind?: string;
@@ -79,7 +84,7 @@ export function addNode(doc: VisualisationIR, opts: AddOptions = {}): AddResult 
   let node: IRNode = {
     id,
     type: kind,
-    label: opts.label?.trim() || DEFAULT_LABEL[kind] || "New item",
+    label: opts.label?.trim() || defaultLabel(type, kind),
     position: opts.position ?? { x: 0, y: 0 },
     data: {},
   };
@@ -88,16 +93,17 @@ export function addNode(doc: VisualisationIR, opts: AddOptions = {}): AddResult 
   }
   const anchor = opts.from ? doc.nodes.find((n) => n.id === opts.from) : undefined;
 
-  if (type === "mindmap") {
+  if (isTreeType(type)) {
     const tree = mindTree(doc);
     const parentId = anchor?.id ?? tree.rootId;
     if (!parentId && doc.nodes.length === 0) {
-      node = { ...node, type: "topic", label: opts.label?.trim() || DEFAULT_LABEL.topic! };
+      node = { ...node, type: "topic", label: opts.label?.trim() || defaultLabel(type, "topic") };
       return { doc: settle({ ...doc, nodes: [sized(doc, node)] }), id };
     }
     if (!parentId) return { doc, id: "" };
     const parentIsRoot = parentId === tree.rootId;
-    node = withColor(node, parentIsRoot ? nextBranchColour(doc) : getColor(tree.byId.get(parentId)!));
+    // Mind-map branches are colour-coded by family; people on an org chart are not.
+    if (type === "mindmap") node = withColor(node, parentIsRoot ? nextBranchColour(doc) : getColor(tree.byId.get(parentId)!));
     const edge: IREdge = { id: createId(), source: parentId, target: id, data: { directed: false } };
     const parent = tree.byId.get(parentId)!;
     const nodes = doc.nodes.map((n) => (n.id === parentId && getExtras(parent).collapsed ? withExtras(n, { collapsed: null }) : n));
@@ -167,7 +173,7 @@ export function updateNode(
       next = { ...next, label: patch.label.trim().slice(0, 500) };
       relayout = true;
     }
-    if (patch.kind && type && patch.kind !== n.type && NODE_KINDS[type].some((k) => k.kind === patch.kind) && type !== "mindmap") {
+    if (patch.kind && type && patch.kind !== n.type && NODE_KINDS[type].some((k) => k.kind === patch.kind) && !isTreeType(type)) {
       next = { ...next, type: patch.kind };
       relayout = true;
     }
@@ -201,7 +207,7 @@ function sortTimeline(doc: VisualisationIR): VisualisationIR {
 
 export function canDelete(doc: VisualisationIR, ids: readonly string[]): boolean {
   if (ids.length === 0) return false;
-  if (doc.type === "mindmap") {
+  if (isTreeType(doc.type)) {
     const root = mindTree(doc).rootId;
     return ids.some((i) => i !== root);
   }
@@ -211,7 +217,7 @@ export function canDelete(doc: VisualisationIR, ids: readonly string[]): boolean
 export function deleteNodes(doc: VisualisationIR, ids: readonly string[]): VisualisationIR {
   if (!canDelete(doc, ids)) return doc;
   const gone = new Set(ids);
-  if (doc.type === "mindmap") {
+  if (isTreeType(doc.type)) {
     const tree = mindTree(doc);
     gone.delete(tree.rootId ?? "");
     for (const id of [...gone]) for (const d of descendants(tree, id)) gone.add(d);
@@ -319,7 +325,7 @@ export function duplicateNodes(doc: VisualisationIR, ids: readonly string[]): Ad
   const chosen = new Set(ids);
   if (!type || chosen.size === 0) return { doc, id: "", ids: [] };
 
-  if (type === "mindmap") {
+  if (isTreeType(type)) {
     const tree = mindTree(doc);
     const newIds: string[] = [];
     let out = doc;
@@ -365,7 +371,7 @@ export function duplicateNodes(doc: VisualisationIR, ids: readonly string[]): Ad
 
 /** Valid new parents for a node: anything except itself, its descendants and (for the root) everything. */
 export function reparentTargets(doc: VisualisationIR, id: string): IRNode[] {
-  if (doc.type !== "mindmap") return [];
+  if (!isTreeType(doc.type)) return [];
   const tree = mindTree(doc);
   if (id === tree.rootId) return [];
   const blocked = new Set([id, ...descendants(tree, id), tree.parent.get(id) ?? ""]);
@@ -379,7 +385,7 @@ function recolourSubtree(doc: VisualisationIR, rootOfBranch: string, color: Colo
 }
 
 export function reparent(doc: VisualisationIR, id: string, newParentId: string): VisualisationIR {
-  if (doc.type !== "mindmap") return doc;
+  if (!isTreeType(doc.type)) return doc;
   const tree = mindTree(doc);
   if (id === tree.rootId || !tree.byId.has(newParentId)) return doc;
   if (id === newParentId || descendants(tree, id).includes(newParentId)) return doc;
@@ -393,7 +399,7 @@ export function reparent(doc: VisualisationIR, id: string, newParentId: string):
 }
 
 export function moveSibling(doc: VisualisationIR, id: string, delta: -1 | 1): VisualisationIR {
-  if (doc.type !== "mindmap") return doc;
+  if (!isTreeType(doc.type)) return doc;
   const tree = mindTree(doc);
   const parent = tree.parent.get(id);
   if (!parent) return doc;
@@ -409,14 +415,14 @@ export function moveSibling(doc: VisualisationIR, id: string, delta: -1 | 1): Vi
 }
 
 export function toggleCollapse(doc: VisualisationIR, id: string): VisualisationIR {
-  if (doc.type !== "mindmap") return doc;
+  if (!isTreeType(doc.type)) return doc;
   const tree = mindTree(doc);
   if (!(tree.children.get(id)?.length)) return doc;
   return settle({ ...doc, nodes: doc.nodes.map((n) => (n.id === id ? withExtras(n, { collapsed: getExtras(n).collapsed ? null : true }) : n)) });
 }
 
 export function setAllCollapsed(doc: VisualisationIR, collapsed: boolean): VisualisationIR {
-  if (doc.type !== "mindmap") return doc;
+  if (!isTreeType(doc.type)) return doc;
   const tree = mindTree(doc);
   return settle({
     ...doc,
@@ -426,7 +432,7 @@ export function setAllCollapsed(doc: VisualisationIR, collapsed: boolean): Visua
 
 /** Ids hidden because an ancestor is collapsed. */
 export function hiddenNodeIds(doc: VisualisationIR): Set<string> {
-  if (doc.type !== "mindmap") return new Set();
+  if (!isTreeType(doc.type)) return new Set();
   const tree = mindTree(doc);
   const hidden = new Set<string>();
   const walk = (id: string, hide: boolean) => {

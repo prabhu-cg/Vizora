@@ -14,7 +14,7 @@ export interface Signals {
 
 /** Score each type from observable features of the text. Pure and explainable. */
 export function scoreText(text: string, lines: readonly Line[], typeHint?: EngineType): Signals {
-  const scores: Record<EngineType, number> = { flowchart: 0, mindmap: 0, conceptmap: 0, timeline: 0 };
+  const scores: Record<EngineType, number> = { flowchart: 0, mindmap: 0, orgchart: 0, conceptmap: 0, timeline: 0 };
   const facts: string[] = [];
   const body = lines.map((l) => l.text);
 
@@ -37,6 +37,9 @@ export function scoreText(text: string, lines: readonly Line[], typeHint?: Engin
     facts.push(numbered >= 3 ? `${numbered} numbered steps` : "sequence words");
   }
   if (/\b(?:process|workflow|steps?|procedure|flow)\b/i.test(text)) scores.flowchart += 0.15;
+
+  // An org chart is never guessed from structure alone (it looks like a mind map); the words have to say so.
+  if (/\borg(?:ani[sz]ation(?:al)?)?\s?-?chart\b|\breporting lines?\b|\bwho reports to whom\b/i.test(text)) scores.orgchart += 1.2;
 
   const forest = buildOutline(lines);
   const depth = outlineDepth(forest);

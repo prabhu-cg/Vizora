@@ -571,3 +571,52 @@ describe("Swimlanes in the editor", () => {
     expect(band).not.toHaveClass("selected");
   });
 });
+
+describe("Org chart in the editor", () => {
+  const ORG = "Ada Lovelace - CEO\n  Bo Chen - CTO\n    Cy Diaz - Engineer\n  Di Evans - COO";
+  const canvas = () => render(<Harness initial={make(ORG, "orgchart")}>{() => <div style={{ width: 1000, height: 700 }}><EngineCanvas /></div>}</Harness>);
+
+  it("draws a card for each person with their role, and an avatar with initials", async () => {
+    canvas();
+    expect(await screen.findByText("Ada Lovelace")).toBeInTheDocument();
+    for (const t of ["CEO", "CTO", "COO", "Engineer", "AL", "BC"]) expect(screen.getByText(t)).toBeInTheDocument();
+    expect(screen.getByRole("application")).toHaveAccessibleName(/orgchart canvas/);
+  });
+
+  it("a manager's team folds away and returns, with the count on the button", async () => {
+    canvas();
+    await screen.findByText("Cy Diaz");
+    fireEvent.click(screen.getByRole("button", { name: "Collapse team Bo Chen" }));
+    await waitFor(() => expect(screen.queryByText("Cy Diaz")).toBeNull());
+    expect(screen.getByRole("button", { name: "Expand team Bo Chen" })).toHaveTextContent("1");
+    fireEvent.click(screen.getByRole("button", { name: "Expand team Bo Chen" }));
+    expect(await screen.findByText("Cy Diaz")).toBeInTheDocument();
+  });
+
+  it("right-click: add a report, rename, and delete with everyone beneath", async () => {
+    canvas();
+    fireEvent.contextMenu((await screen.findByText("Bo Chen")).closest(".react-flow__node")!);
+    const menu = await screen.findByRole("menu");
+    const items = within(menu).getAllByRole("menuitem").map((i) => i.textContent!.trim());
+    expect(items).toEqual(expect.arrayContaining(["Add a report", "Add sibling", "Collapse team", "Rename", "Duplicate", "Delete person and everyone beneath"]));
+    const before = state().nodes.length;
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Add a report" }));
+    await waitFor(() => expect(state().nodes).toHaveLength(before + 1));
+    expect(state().nodes.at(-1)!.label).toBe("New person");
+  });
+
+  it("an empty org chart invites you to add the head of the organisation", async () => {
+    render(<Harness initial={{ ...make("", "orgchart"), nodes: [], edges: [] }}>{() => <div style={{ width: 600, height: 400 }}><EngineCanvas /></div>}</Harness>);
+    expect(await screen.findByText(/Add the head of the organisation/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Add head of organisation/ })).toBeInTheDocument();
+  });
+
+  it("the Inspector names the fields for people: Name and Role or title", async () => {
+    let api!: Api;
+    render(<Harness initial={make(ORG, "orgchart")}>{(a) => { api = a; return <Inspector doc={a.doc} session={a.session} update={a.update} fallback={<p>none</p>} />; }}</Harness>);
+    select(api, "Bo Chen");
+    expect(await screen.findByLabelText("Name")).toHaveValue("Bo Chen");
+    expect(screen.getByLabelText("Role or title")).toHaveValue("CTO");
+    expect(screen.getByRole("button", { name: "Add a report" })).toBeInTheDocument();
+  });
+});

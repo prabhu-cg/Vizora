@@ -19,6 +19,7 @@ const SECTIONS: { cap: Capability; heading?: string }[] = [
   { cap: byId(WORKSPACE_FEATURES, "generation") },
   { cap: byId(CAPABILITIES, "diagrams") },
   { cap: byId(CAPABILITIES, "mindmaps") },
+  { cap: byId(CAPABILITIES, "orgcharts") },
   { cap: byId(CAPABILITIES, "conceptmaps") },
   { cap: byId(CAPABILITIES, "timelines") },
   { cap: byId(CAPABILITIES, "charts") },

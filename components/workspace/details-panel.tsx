@@ -17,7 +17,7 @@ export function DetailsPanel({
   onChange: (updater: (d: VisualisationIR) => VisualisationIR, options?: UpdateOptions) => void;
 }) {
   const id = useId();
-  const unit = doc.type === "mindmap" ? "Branches" : doc.type === "timeline" ? "Events" : doc.type === "conceptmap" ? "Concepts" : "Items";
+  const unit = doc.type === "mindmap" ? "Branches" : doc.type === "orgchart" ? "People" : doc.type === "timeline" ? "Events" : doc.type === "conceptmap" ? "Concepts" : "Items";
   const rows: [string, string][] = [
     ...(doc.type === "chart" ? [] : ([[unit, String(doc.nodes.length)], doc.type === "timeline" ? undefined : ["Connections", String(doc.edges.length)]].filter(Boolean) as [string, string][])),
     ["Datasets", String(doc.data.datasets.length)],

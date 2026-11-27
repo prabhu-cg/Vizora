@@ -12,6 +12,7 @@ export const tokens = (query: string): string[] => normalise(query).split(" ").f
 const TYPE_TERMS: Record<VisualisationType, string> = {
   flowchart: "flowchart flow chart process diagram",
   mindmap: "mind map mindmap brainstorm",
+  orgchart: "org chart organisation organization hierarchy reporting people team",
   conceptmap: "concept map conceptmap relationships",
   timeline: "timeline roadmap schedule",
   chart: "chart graph data",

@@ -2,7 +2,7 @@
 
 import { ArrowRightLeft, ChevronsDownUp, ChevronsUpDown, Copy, CornerDownRight, Maximize2, MousePointerClick, Pencil, Plus, Trash2, Unlink } from "lucide-react";
 import { ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator } from "@/components/ui/context-menu";
-import { canDelete, NODE_KINDS } from "@/lib/engine";
+import { canDelete, isTreeType, NODE_KINDS } from "@/lib/engine";
 import { laneIndexOf, readLanes } from "@/lib/engine/lanes";
 import { getExtras } from "@/lib/engine/semantics";
 import { mindTree } from "@/lib/engine/mindmap-tree";
@@ -14,7 +14,7 @@ export type MenuTarget =
   | { kind: "node"; id: string }
   | { kind: "edge"; id: string };
 
-const NOUN = { flowchart: "step", mindmap: "branch", conceptmap: "concept", timeline: "event" } as const;
+const NOUN = { flowchart: "step", mindmap: "branch", orgchart: "person", conceptmap: "concept", timeline: "event" } as const;
 
 /**
  * The right-click menu on the canvas. Every entry is also reachable from the
@@ -24,7 +24,7 @@ export function CanvasMenu({ target, onFit }: { target: MenuTarget; onFit: () =>
   const ed = useEditor();
   const { doc } = ed;
   const type = doc.type as keyof typeof NOUN;
-  const kinds = type in NOUN ? NODE_KINDS[type as "flowchart" | "mindmap" | "conceptmap" | "timeline"] : [];
+  const kinds = type in NOUN ? NODE_KINDS[type as keyof typeof NOUN] : [];
 
   if (target.kind === "edge") {
     return (
@@ -55,9 +55,9 @@ export function CanvasMenu({ target, onFit }: { target: MenuTarget; onFit: () =>
             <Plus aria-hidden="true" /> Add concept here
           </ContextMenuItem>
         )}
-        {type === "mindmap" && (
+        {isTreeType(type) && (
           <ContextMenuItem disabled={doc.nodes.length > 0} onSelect={ed.addFirst}>
-            <Plus aria-hidden="true" /> Add central topic
+            <Plus aria-hidden="true" /> {type === "orgchart" ? "Add head of organisation" : "Add central topic"}
           </ContextMenuItem>
         )}
         {type === "timeline" && (
@@ -78,7 +78,7 @@ export function CanvasMenu({ target, onFit }: { target: MenuTarget; onFit: () =>
 
   const node = doc.nodes.find((n) => n.id === target.id);
   if (!node) return null;
-  const tree = type === "mindmap" ? mindTree(doc) : undefined;
+  const tree = isTreeType(type) ? mindTree(doc) : undefined;
   const hasParent = Boolean(tree?.parent.get(node.id));
   const hasChildren = Boolean(tree?.children.get(node.id)?.length);
   const collapsed = Boolean(getExtras(node).collapsed);
@@ -104,17 +104,17 @@ export function CanvasMenu({ target, onFit }: { target: MenuTarget; onFit: () =>
           <CornerDownRight aria-hidden="true" /> Add related concept
         </ContextMenuItem>
       )}
-      {type === "mindmap" && (
+      {isTreeType(type) && (
         <>
           <ContextMenuItem onSelect={() => ed.addChildOf(node.id)}>
-            <CornerDownRight aria-hidden="true" /> Add branch
+            <CornerDownRight aria-hidden="true" /> {type === "orgchart" ? "Add a report" : "Add branch"}
           </ContextMenuItem>
           <ContextMenuItem disabled={!hasParent} onSelect={ed.addSibling}>
             <Plus aria-hidden="true" /> Add sibling
           </ContextMenuItem>
           {hasChildren && (
             <ContextMenuItem onSelect={() => ed.toggleCollapse(node.id)}>
-              {collapsed ? <ChevronsUpDown aria-hidden="true" /> : <ChevronsDownUp aria-hidden="true" />} {collapsed ? "Expand branch" : "Collapse branch"}
+              {collapsed ? <ChevronsUpDown aria-hidden="true" /> : <ChevronsDownUp aria-hidden="true" />} {collapsed ? `Expand ${type === "orgchart" ? "team" : "branch"}` : `Collapse ${type === "orgchart" ? "team" : "branch"}`}
             </ContextMenuItem>
           )}
         </>
@@ -143,7 +143,7 @@ export function CanvasMenu({ target, onFit }: { target: MenuTarget; onFit: () =>
         <Copy aria-hidden="true" /> Duplicate
       </ContextMenuItem>
       <ContextMenuItem destructive disabled={!deletable} onSelect={ed.removeSelection}>
-        <Trash2 aria-hidden="true" /> Delete {type === "mindmap" && hasChildren ? `${NOUN[type]} and its sub-branches` : NOUN[type] ?? "item"}
+        <Trash2 aria-hidden="true" /> Delete {isTreeType(type) && hasChildren ? (type === "orgchart" ? "person and everyone beneath" : `${NOUN[type]} and its sub-branches`) : NOUN[type] ?? "item"}
       </ContextMenuItem>
     </ContextMenuContent>
   );

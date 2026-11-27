@@ -29,6 +29,15 @@ export function measureNode(type: EngineType, node: Pick<IRNode, "type" | "label
     const descLines = ex.description ? wrapText(ex.description, textColumns(width), 3).length : 0;
     return { width, height: 22 + titleLines * LINE_H + (descLines ? descLines * 17 + 6 : 0) + 22 };
   }
+  if (type === "orgchart") {
+    // A person's card: avatar, then the name with their role beneath. Wide enough that a short role stays on one line.
+    const role = ex.description ?? "";
+    const text = Math.max(label.length, role.length * 0.9);
+    const width = Math.min(280, Math.max(208, Math.ceil(text * CHAR_W + 72)));
+    const nameLines = wrapText(label, textColumns(width, 72), 2).length;
+    const roleLines = role ? wrapText(role, textColumns(width, 72), 2).length : 0;
+    return { width, height: Math.max(64, 22 + nameLines * LINE_H + (roleLines ? roleLines * 17 + 3 : 0) + 18) };
+  }
   const natural = Math.ceil(label.length * CHAR_W + 32);
   const base = Math.min(260, Math.max(110, natural));
   switch (node.type) {

@@ -15,6 +15,7 @@ export const EXPORT_THEME = {
   control: "#8a7f6e",
   amber: "#e8b923",
   amberDeep: "#d4a615",
+  amberText: "#826400",
   font: "DM Sans, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
   colours: {
     default: "#8a7f6e",

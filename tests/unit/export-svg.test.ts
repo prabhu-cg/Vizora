@@ -10,6 +10,7 @@ const make = (text: string, type: EngineType): VisualisationIR => documentFromIn
 const SAMPLES: Record<EngineType, string> = {
   flowchart: "1. Sign up\n2. If verified, activate, otherwise resend\n3. Input: welcome <b>&</b> \"quotes\"",
   mindmap: "Create a mind map for Launch\n- Marketing\n  - Website\n- Product\n  - Pricing",
+  orgchart: "Ada Lovelace - CEO\n  Bo Chen - CTO\n    Cy Diaz - Engineer\n  Di Evans - COO",
   conceptmap: "Customers sign contracts\nSuppliers supply products",
   timeline: "2026-01-01: Kick-off — scope\n2026-02-01: Build [Eng]\n2026-03-01: Launch",
 };
