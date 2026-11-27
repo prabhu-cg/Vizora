@@ -17,7 +17,9 @@ import "@xyflow/react/dist/style.css";
 import { Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { COLOR_VAR, getColor } from "@/lib/engine/semantics";
+import { CanvasMenu, type MenuTarget } from "./canvas-menu";
 import { AXIS_ID, toFlow } from "./flow-adapter";
 import { useEditor } from "./context";
 import { NODE_TYPES } from "./nodes";
@@ -42,6 +44,7 @@ export function EngineCanvas() {
   const [drag, setDrag] = useState<Record<string, { x: number; y: number }>>({});
   const flow = useMemo(() => toFlow(doc, selection, drag), [doc, selection, drag]);
   const rf = useReactFlow();
+  const [menu, setMenu] = useState<MenuTarget>({ kind: "pane", position: { x: 0, y: 0 } });
 
   // First open of a freshly generated document: fit it to the screen once.
   useEffect(() => {
@@ -104,9 +107,30 @@ export function EngineCanvas() {
     [doc.nodes],
   );
 
+  // Remember what was right-clicked; the menu (opened by the same event) reads it. A right-clicked item that is not
+  // already selected becomes the selection, so Delete and Duplicate act on it.
+  const onPaneContextMenu = useCallback((e: MouseEvent | React.MouseEvent) => setMenu({ kind: "pane", position: rf.screenToFlowPosition({ x: e.clientX, y: e.clientY }) }), [rf]);
+  const onNodeContextMenu = useCallback(
+    (_: unknown, n: Node) => {
+      if (n.id === AXIS_ID) return;
+      if (!selection.nodes.includes(n.id)) ed.setSelection({ nodes: [n.id], edges: [] });
+      setMenu({ kind: "node", id: n.id });
+    },
+    [ed, selection.nodes],
+  );
+  const onEdgeContextMenu = useCallback(
+    (_: unknown, edge: { id: string }) => {
+      if (!selection.edges.includes(edge.id)) ed.setSelection({ nodes: [], edges: [edge.id] });
+      setMenu({ kind: "edge", id: edge.id });
+    },
+    [ed, selection.edges],
+  );
+
   const interactive = doc.type === "flowchart" || doc.type === "conceptmap";
 
   return (
+    <ContextMenu>
+    <ContextMenuTrigger asChild>
     <div data-editor-canvas className="vz-flow relative h-full min-h-96 w-full">
       <ReactFlow
         nodes={flow.nodes}
@@ -117,6 +141,9 @@ export function EngineCanvas() {
         onNodeDragStop={onNodeDragStop}
         onConnect={onConnect}
         onMoveEnd={onMoveEnd}
+        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
         onNodeDoubleClick={(_, n) => n.id !== AXIS_ID && ed.startEdit(n.id)}
         defaultViewport={doc.viewport}
         connectionMode={ConnectionMode.Loose}
@@ -146,5 +173,8 @@ export function EngineCanvas() {
         </div>
       )}
     </div>
+    </ContextMenuTrigger>
+    <CanvasMenu target={menu} onFit={() => void rf.fitView({ padding: 0.2, maxZoom: 1.1, duration: 200 })} />
+    </ContextMenu>
   );
 }

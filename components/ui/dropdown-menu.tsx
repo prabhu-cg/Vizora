@@ -14,7 +14,7 @@ export function DropdownMenuContent({ className, sideOffset = 6, ...props }: Rea
         sideOffset={sideOffset}
         align="end"
         className={cn(
-          "z-50 min-w-48 overflow-hidden rounded-menu border border-border-strong bg-popover p-1 text-body shadow-overlay",
+          "vz-menu z-50 min-w-48 overflow-hidden rounded-menu border border-border-strong bg-popover p-1 text-body shadow-overlay",
           className,
         )}
         {...props}

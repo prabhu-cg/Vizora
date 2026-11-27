@@ -137,7 +137,7 @@ describe("no misleading claims", () => {
   });
   it("what is still missing is listed as 'not built'", () => {
     const next = CAPABILITIES.find((c) => c.id === "charts")!.next.join(" ");
-    expect(next).toMatch(/bars and lines/);
+    expect(next).toMatch(/waterfall, bubble and Sankey/);
     expect(next).toMatch(/\.xls/);
     expect(CAPABILITIES.find((c) => c.id === "dashboards")!.next.join(" ")).toMatch(/Dashboard-wide filters/);
   });

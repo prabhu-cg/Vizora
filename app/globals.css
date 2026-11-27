@@ -98,14 +98,21 @@ strong, b { font-weight: 600; }
 @keyframes vz-slide-out { from { transform: none; } to { transform: translateX(100%); } }
 @keyframes vz-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes vz-fade-out { from { opacity: 1; } to { opacity: 0; } }
-@keyframes vz-pop-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
-@keyframes vz-pop-out { from { opacity: 1; transform: translate(-50%, -50%); } to { opacity: 0; transform: translate(-50%, -50%) scale(0.97); } }
+/* Centring uses the `translate` property (Tailwind), so these animate `scale` only: setting `transform: translate()` here would stack a second offset and make the dialog jump. */
+@keyframes vz-pop-in { from { opacity: 0; scale: 0.96; } to { opacity: 1; scale: 1; } }
+@keyframes vz-pop-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: 0.97; } }
 .vz-drawer[data-state="open"] { animation: vz-slide-in var(--duration-in) var(--ease-standard); }
-.vz-drawer[data-state="closed"] { animation: vz-slide-out var(--duration-out) ease-in; }
+.vz-drawer[data-state="closed"] { animation: vz-slide-out var(--duration-out) ease-in forwards; }
 .vz-scrim[data-state="open"] { animation: vz-fade-in var(--duration-out) ease-out; }
-.vz-scrim[data-state="closed"] { animation: vz-fade-out 150ms ease-in; }
+.vz-scrim[data-state="closed"] { animation: vz-fade-out 150ms ease-in forwards; }
+/* Menus: a short fade and settle from the point they open at. */
+@keyframes vz-menu-in { from { opacity: 0; scale: 0.97; } to { opacity: 1; scale: 1; } }
+@keyframes vz-menu-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: 0.97; } }
+.vz-menu { transform-origin: var(--radix-context-menu-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin, center)); }
+.vz-menu[data-state="open"] { animation: vz-menu-in 140ms var(--ease-standard); }
+.vz-menu[data-state="closed"] { animation: vz-menu-out 100ms ease-in forwards; }
 .vz-dialog[data-state="open"] { animation: vz-pop-in var(--duration-out) var(--ease-standard); }
-.vz-dialog[data-state="closed"] { animation: vz-pop-out 120ms ease-in; }
+.vz-dialog[data-state="closed"] { animation: vz-pop-out 120ms ease-in forwards; }
 
 /* React Flow follows the tokens (its own colorMode handles the rest). */
 /* React Flow asks that its attribution stays visible unless you hold a Pro licence; keep it, styled quietly. */

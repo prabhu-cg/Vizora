@@ -146,7 +146,7 @@ describe("switching kind", () => {
     expect(switchKind(chartConfigSchema.parse({ x: "n", y: ["m"] }), "histogram").y).toEqual([]);
   });
   it("covers every chart kind", () => {
-    expect(CHART_KINDS).toHaveLength(13);
+    expect(CHART_KINDS).toHaveLength(17);
     for (const k of CHART_KINDS) expect(switchKind(chartConfigSchema.parse({}), k).kind).toBe(k);
   });
 });

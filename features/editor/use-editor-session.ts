@@ -41,8 +41,8 @@ export function useEditorSession(doc: VisualisationIR, update: Update) {
   );
 
   const add = useCallback(
-    (kind?: string, from?: string) => {
-      const r = addNode(docRef.current, { kind, from: from ?? only() });
+    (kind?: string, from?: string, position?: { x: number; y: number }) => {
+      const r = addNode(docRef.current, { kind, from: from ?? (position ? undefined : only()), position });
       if (r.doc !== docRef.current) {
         apply(r.doc);
         focusNew(r.id);
@@ -104,6 +104,11 @@ export function useEditorSession(doc: VisualisationIR, update: Update) {
     toggleCollapse: (id) => update((d) => toggleCollapse(d, id)),
     addChildOf,
     addFirst,
+    addItem: ({ kind, from, position }) => add(kind, from, position),
+    addSibling,
+    duplicateSelection: duplicate,
+    removeSelection: remove,
+    selectAll,
     moveNodes: (positions) => update((d) => moveNodes(d, positions)),
     connect: (source, target) => update((d) => connect(d, source, target)),
     setViewport: (vp: IRViewport) =>

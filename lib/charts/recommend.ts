@@ -71,7 +71,7 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
     if (!alternatives.some((a) => a.kind === kind)) alternatives.push({ kind, config, reason });
   };
   // The attached config must always draw the chart the recommendation names.
-  const result = (primary: Suggestion): Recommendation => ({ ...primary, config: withKind(primary.config, primary.kind), alternatives: alternatives.filter((a) => a.kind !== primary.kind).slice(0, 5) });
+  const result = (primary: Suggestion): Recommendation => ({ ...primary, config: withKind(primary.config, primary.kind), alternatives: alternatives.filter((a) => a.kind !== primary.kind).slice(0, 9) });
 
   // ── The user has already chosen columns: respect them. ────────────────────
   const sx = selection.x ? byKey.get(selection.x) : undefined;
@@ -150,13 +150,17 @@ export function recommend(dataset: Dataset, selection: Selection = {}): Recommen
       add("pie", withKind(cfg, "pie"), `A pie shows each of the ${x.distinct} categories as a share of the whole.`);
     }
     add("hbar", withKind(cfg, "hbar"), x.distinct > 8 ? `Horizontal bars read better with ${x.distinct} categories.` : "Horizontal bars suit long category names.");
+    if (nonNegative(m) && x.distinct >= 3 && x.distinct <= 12 && !wholeLike) add("funnel", withKind(cfg, "funnel"), `A funnel shows ${q(m)} from the largest ${q(x)} to the smallest, which suits stages that drop off.`);
+    if (dataset.rows.length >= x.distinct * 5) add("boxplot", withKind(cfg, "boxplot"), `A box plot shows the spread of ${q(m)} within each ${q(x)}: the median, the middle half and the outliers.`);
     if (measures.length > 1) {
       const multi = withKind({ ...cfg, y: measures.slice(0, 3).map((c) => c.key) }, "grouped-bar");
+      add("combo", withKind({ ...multi, y: measures.slice(0, 2).map((c) => c.key) }, "combo"), `Bars for ${q(measures[0]!)} with ${q(measures[1]!)} as a line on its own axis, when the two are on different scales.`);
       add("grouped-bar", multi, `Compare ${list(measures.slice(0, 3))} side by side for each ${q(x)}.`);
       add("stacked-bar", withKind(multi, "stacked-bar"), "Stacked bars show how the measures add up.");
     }
     if (second) {
       add("stacked-bar", withKind({ ...cfg, series: second.key }, "stacked-bar"), `Stacked bars split ${q(m)} by ${q(second)} within each ${q(x)}.`);
+      if (nonNegative(m)) add("stacked-100", withKind({ ...cfg, series: second.key }, "stacked-100"), `100% stacked bars compare the mix of ${q(second)} inside each ${q(x)}, regardless of totals.`);
       if (x.distinct <= 30 && second.distinct <= 30) add("heatmap", withKind({ ...cfg, series: second.key }, "heatmap"), `A heatmap shows ${q(m)} for every ${q(x)} and ${q(second)} combination.`);
     }
     if (measures.length >= 2) add("scatter", withKind({ ...cfg, x: measures[0]!.key, y: [measures[1]!.key] }, "scatter"), `${q(measures[0]!)} against ${q(measures[1]!)} shows whether they move together.`);
@@ -198,7 +202,8 @@ export function autoConfig(dataset: Dataset): ChartConfig {
 /** Re-target an existing configuration at a new kind, adjusting fields the new kind cannot use. */
 export function switchKind(config: ChartConfig, kind: ChartKind): ChartConfig {
   const next = { ...config, kind };
-  if (kind === "pie" || kind === "donut") return chartConfigSchema.parse({ ...next, y: config.y.slice(0, 1), series: undefined });
+  if (kind === "pie" || kind === "donut" || kind === "funnel") return chartConfigSchema.parse({ ...next, y: config.y.slice(0, 1), series: undefined });
+  if (kind === "boxplot") return chartConfigSchema.parse({ ...next, y: config.y.slice(0, 1), series: undefined, lines: [] });
   if (kind === "histogram") return chartConfigSchema.parse({ ...next, x: config.x, y: [], series: undefined });
   return chartConfigSchema.parse(next);
 }

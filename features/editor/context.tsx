@@ -25,6 +25,12 @@ export interface EditorContextValue {
   moveNodes: (positions: Record<string, { x: number; y: number }>) => void;
   connect: (source: string, target: string) => void;
   setViewport: (vp: IRViewport) => void;
+  /** Add an item: optionally of a given kind, connected to an existing one, and/or at a canvas position. */
+  addItem: (opts: { kind?: string; from?: string; position?: { x: number; y: number } }) => void;
+  addSibling: () => void;
+  duplicateSelection: () => void;
+  removeSelection: () => void;
+  selectAll: () => void;
 }
 
 const Ctx = createContext<EditorContextValue | null>(null);

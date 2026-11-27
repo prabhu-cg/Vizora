@@ -90,12 +90,12 @@ export const CAPABILITIES: Capability[] = [
     today: [
       "Import CSV, TSV, JSON or Excel (.xlsx) files, paste straight from a spreadsheet, or type data in; everything is read in your browser",
       "Column types, dates, missing values and duplicate rows are detected and shown in a preview, and you can correct any column's type",
-      "Thirteen chart types: bar, horizontal bar, line, area, pie, donut, scatter, stacked bar, grouped bar, multi-series line, heatmap, histogram and treemap",
+      "Seventeen chart types: bar, horizontal bar, line, area, pie, donut, scatter, stacked bar, 100% stacked bar, grouped bar, bar and line, multi-series line, heatmap, histogram, treemap, box plot and funnel",
       "Choose the X axis, measures and series, with sum, average, count, minimum or maximum, and group dates by month or year",
       "Edit titles, axis labels, legend, colours, data labels, tooltips, sorting, top-N limits and filters",
       "Inspect the numbers behind any chart, and a profile of each column",
     ],
-    next: ["Charts that combine bars and lines", "Custom number and date formats", "Older spreadsheet formats such as .xls"],
+    next: ["Further chart types such as waterfall, bubble and Sankey", "Custom number and date formats", "Older spreadsheet formats such as .xls"],
   },
   {
     id: "dashboards",
@@ -211,8 +211,8 @@ export const USE_CASES: UseCase[] = [
     visual: "chart",
     intro: "Get from a spreadsheet export to a readable chart quickly.",
     example: "Import an Excel export of monthly sales, accept the recommended line chart, add a second chart for sales by region, and export the dashboard as a PDF.",
-    today: ["Import Excel, CSV, JSON or pasted data, with profiling and type checks", "Thirteen chart types with a recommendation and the reason for it", "Filters, aggregation, sorting and underlying-data inspection", "Dashboards exported as PNG, SVG or PDF", "Files are read and processed in your browser; Vizora has no upload feature"],
-    next: ["Charts that combine bars and lines", "Dashboard-wide filters"],
+    today: ["Import Excel, CSV, JSON or pasted data, with profiling and type checks", "Seventeen chart types with a recommendation and the reason for it", "Filters, aggregation, sorting and underlying-data inspection", "Dashboards exported as PNG, SVG or PDF", "Files are read and processed in your browser; Vizora has no upload feature"],
+    next: ["Dashboard-wide filters", "Text and number tiles"],
   },
   {
     id: "project-management",
@@ -271,7 +271,7 @@ export const FREE_PROMISES = [
   { title: "No subscription required", body: "The Free edition is free, with no trial clock and no card." },
   { title: "No AI key required", body: "Nothing in Vizora needs an AI service or API key." },
   { title: "Local-first storage", body: "Projects live in your browser on your device. Vizora has no cloud backup, and nothing is stored on our servers." },
-  { title: "Useful from the start", body: "Flowcharts, mind maps, concept maps, timelines, thirteen chart types and dashboards, with undo, autosave, Excel, CSV and JSON import, projects, and backup and restore." },
+  { title: "Useful from the start", body: "Flowcharts, mind maps, concept maps, timelines, seventeen chart types and dashboards, with undo, autosave, Excel, CSV and JSON import, projects, and backup and restore." },
   { title: "Export your work", body: "PNG, SVG, CSV and PDF, editable JSON per visualisation, static embed code for any web page, and one-file backups." },
 ];
 
@@ -302,7 +302,7 @@ export const PLANS: Plan[] = [
       { text: "Mind maps", status: "available" },
       { text: "Concept maps", status: "available" },
       { text: "Timelines", status: "available" },
-      { text: "Charts: 13 types with recommendations", status: "available" },
+      { text: "Charts: 17 types with recommendations", status: "available" },
       { text: "Dashboards", status: "available" },
       { text: "Rule-based text-to-visual (no AI)", status: "available" },
       { text: "CSV, JSON, Excel and pasted-data imports", status: "available" },
@@ -352,7 +352,7 @@ export const FAQS: Faq[] = [
   { q: "What is Vizora?", a: "Vizora is a universal visualisation platform that runs in your browser. It turns ideas, information and data into visuals you can explore and edit: flowcharts, mind maps, concept maps, timelines and charts. It is not a chart builder alone and it is not an AI image generator." },
   { q: "Is Vizora free?", a: "Yes. The Free edition costs nothing, has no time limit and needs no payment details or account. Pro and Team are planned for the future and are not available yet." },
   { q: "Do I need an AI subscription?", a: "No. Nothing in Vizora uses AI, so no AI service, subscription or API key is needed. Turning text into a visual is done with fixed rules. AI-assisted features are planned for Pro." },
-  { q: "What can I visualise?", a: "You can create flowcharts, mind maps, concept maps and timelines from pasted or typed content, or build them by hand. You can turn Excel, CSV, JSON or pasted tables into charts (thirteen types) and combine charts into dashboards." },
+  { q: "What can I visualise?", a: "You can create flowcharts, mind maps, concept maps and timelines from pasted or typed content, or build them by hand. You can turn Excel, CSV, JSON or pasted tables into charts (seventeen types) and combine charts into dashboards." },
   { q: "Can I edit generated diagrams?", a: "Yes. Everything Vizora generates opens in the same editor as something you built yourself: change text, add or remove items, reconnect, restyle, undo and redo. You can also edit your source text and generate again." },
   { q: "How well does it understand my text?", a: "It understands visible structure: numbered or bulleted steps, “if … otherwise …”, outlines, dates and statements like “A depends on B”. It does not understand arbitrary prose. When something is ambiguous or cannot be read, it tells you and leaves it for you to fix; it never invents steps, dates or relationships. A bare request such as “create a flowchart for onboarding” produces an empty flowchart, because there is nothing to structure." },
   { q: "Can I upload data?", a: "Yes. You can import CSV, TSV, JSON and Excel (.xlsx) files, paste data copied from a spreadsheet, or type it in. Files are read and processed in your browser; Vizora has no upload feature and does not send them anywhere, and your original file is never changed. Files up to 25 MB are accepted, older .xls files are not, and Vizora tells you clearly if a file cannot be read." },

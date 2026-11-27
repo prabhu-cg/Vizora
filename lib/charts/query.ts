@@ -15,6 +15,8 @@ export interface ChartData {
   points?: { x: number; y: number; series?: string }[];
   matrix?: { xs: string[]; ys: string[]; cells: [number, number, number][]; min: number; max: number };
   tree?: TreeNode[];
+  /** Box plot: five-number summary per group, plus the points beyond the whiskers. */
+  box?: { stats: [number, number, number, number, number][]; counts: number[]; outliers: [number, number][] };
   /** Suggested axis titles, used when the config does not set its own. */
   xLabel: string;
   yLabel: string;
@@ -39,6 +41,7 @@ const MAX_POINTS = 5000;
 /** The most categories each chart kind draws when no limit is set; beyond it the largest are kept, with a note. */
 export const CATEGORY_CAP: Record<ChartConfig["kind"], number> = {
   pie: 30, donut: 30, bar: 150, hbar: 60, "stacked-bar": 100, "grouped-bar": 100, line: 5000, area: 5000, "multi-line": 5000, treemap: 300, heatmap: 50, scatter: 5000, histogram: 5000,
+  "stacked-100": 100, combo: 100, boxplot: 30, funnel: 12,
 };
 const MAX_HEATMAP = 50;
 
@@ -218,6 +221,51 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
     return { ok: true, data: { ...base, categories: xs, series: [], matrix: { xs, ys, cells: out, min: Math.min(...values), max: Math.max(...values) }, xLabel: xCol.label, yLabel: serCol.label } };
   }
 
+  // ── Box plot ──────────────────────────────────────────────────────────────
+  if (config.kind === "boxplot") {
+    const yc = yCols[0];
+    if (!yc || yc.type !== "number") return fail("A box plot needs a numeric column to summarise. Choose one under Measures.");
+    const groups = new Map<string, number[]>();
+    let empty = 0;
+    for (const r of rows) {
+      const v = num(r[yc.key] ?? null);
+      if (v === null) { empty++; continue; }
+      const g = xCol ? bucket(r[xCol.key] ?? null, xCol, config.timeBucket) : yc.label;
+      (groups.get(g) ?? groups.set(g, []).get(g)!).push(v);
+    }
+    if (empty) notes.push(`${empty} row${empty === 1 ? " has" : "s have"} no value and ${empty === 1 ? "is" : "are"} not counted.`);
+    if (!groups.size) return fail("This column has no numbers to summarise.");
+    let keys = xCol ? orderKeys([...groups.keys()], xCol) : [...groups.keys()];
+    const cap = config.limit ?? CATEGORY_CAP.boxplot;
+    if (keys.length > cap) {
+      notes.push(config.limit ? `Showing the ${cap} groups with the most rows of ${keys.length}.` : `Showing the ${cap} groups with the most rows of ${keys.length.toLocaleString()} to keep the chart readable. Change this under Sorting and limits.`);
+      const keep = new Set([...keys].sort((a, b) => groups.get(b)!.length - groups.get(a)!.length).slice(0, cap));
+      keys = keys.filter((k) => keep.has(k));
+    }
+    const quantile = (sorted: number[], p: number) => {
+      const i = (sorted.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i);
+      return sorted[lo]! + (sorted[hi]! - sorted[lo]!) * (i - lo);
+    };
+    const stats: [number, number, number, number, number][] = [];
+    const counts: number[] = [];
+    const outliers: [number, number][] = [];
+    keys.forEach((k, gi) => {
+      const sorted = [...groups.get(k)!].sort((a, b) => a - b);
+      const q1 = quantile(sorted, 0.25), med = quantile(sorted, 0.5), q3 = quantile(sorted, 0.75);
+      const fence = 1.5 * (q3 - q1);
+      const inside = sorted.filter((v) => v >= q1 - fence && v <= q3 + fence);
+      stats.push([inside[0] ?? sorted[0]!, q1, med, q3, inside[inside.length - 1] ?? sorted[sorted.length - 1]!]);
+      counts.push(sorted.length);
+      for (const v of sorted) if (v < q1 - fence || v > q3 + fence) outliers.push([gi, v]);
+    });
+    if (outliers.length > 2000) {
+      notes.push(`${outliers.length.toLocaleString()} outliers; the most extreme 2,000 are drawn.`);
+      outliers.sort((a, b) => Math.abs(b[1] - stats[b[0]]![2]) - Math.abs(a[1] - stats[a[0]]![2]));
+      outliers.length = 2000;
+    }
+    return { ok: true, data: { ...base, categories: keys, series: [], box: { stats, counts, outliers }, xLabel: xCol?.label ?? "", yLabel: yc.label } };
+  }
+
   // ── Category charts ───────────────────────────────────────────────────────
   if (!(CATEGORY_KINDS as readonly string[]).includes(config.kind)) return fail("This chart type is not supported yet.");
   if (!xCol) return fail("Choose a column for the X axis (the categories).");
@@ -226,9 +274,10 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
   if (agg !== "count" && badMeasure) return fail(`“${badMeasure.label}” is not numeric, so it cannot be ${agg === "sum" ? "added up" : agg === "avg" ? "averaged" : `used for its ${agg === "min" ? "minimum" : "maximum"}`}. Choose a numeric column or use Count.`);
 
   const measureCols: (Column | undefined)[] = agg === "count" ? [yCols[0]] : yCols;
-  const splitBySeries = !!serCol && !["pie", "donut"].includes(config.kind);
-  const useCols = splitBySeries || config.kind === "pie" || config.kind === "donut" ? measureCols.slice(0, 1) : measureCols;
-  if ((config.kind === "pie" || config.kind === "donut") && measureCols.length > 1) notes.push(`A ${config.kind === "pie" ? "pie" : "donut"} shows one measure; “${measureCols[0]?.label}” is used.`);
+  const oneMeasure = config.kind === "pie" || config.kind === "donut" || config.kind === "funnel";
+  const splitBySeries = !!serCol && !oneMeasure;
+  const useCols = splitBySeries || oneMeasure ? measureCols.slice(0, 1) : measureCols;
+  if (oneMeasure && measureCols.length > 1) notes.push(`A ${config.kind === "pie" ? "pie" : config.kind === "donut" ? "donut" : "funnel"} shows one measure; “${measureCols[0]?.label}” is used.`);
   if (splitBySeries && measureCols.length > 1) notes.push(`With a Series column, one measure is shown; “${measureCols[0]?.label}” is used.`);
 
   const seriesNames = splitBySeries ? [] as string[] : useCols.map((c) => measureLabel(config, c));
@@ -274,6 +323,7 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
   let order = cats.map((_, i) => i);
   if (config.sort.by === "value") order.sort((a, b) => (config.sort.dir === "asc" ? total(a) - total(b) : total(b) - total(a)));
   else if (config.sort.by === "label") order.sort((a, b) => compare(cats[a]!, cats[b]!, xCol.type === "number" ? "number" : "string") * (config.sort.dir === "asc" ? 1 : -1));
+  else if (config.kind === "funnel") order.sort((a, b) => total(b) - total(a)); // a funnel reads from largest to smallest
   else if (effectiveLimit && effectiveLimit < order.length) order.sort((a, b) => total(b) - total(a)); // "top N" implies ranking by value
   if (effectiveLimit && order.length > effectiveLimit) {
     const kept = order.slice(0, effectiveLimit);
@@ -324,6 +374,7 @@ export function runChartQuery(dataset: Pick<Dataset, "columns" | "rows">, config
 /** The aggregated table behind a chart, as rows ready for display or CSV. */
 export function chartTable(d: ChartData): { headers: string[]; rows: (string | number | null)[][] } {
   if (d.points) return { headers: [d.xLabel, d.yLabel, ...(d.points.some((p) => p.series) ? ["Series"] : [])], rows: d.points.map((p) => [p.x, p.y, ...(d.points!.some((q) => q.series) ? [p.series ?? ""] : [])]) };
+  if (d.box) return { headers: [d.xLabel || "Group", "Minimum", "Lower quartile", "Median", "Upper quartile", "Maximum", "Rows"], rows: d.categories.map((c, i) => [c, ...d.box!.stats[i]!, d.box!.counts[i]!]) };
   if (d.matrix) {
     const { xs, ys, cells } = d.matrix;
     return { headers: [d.xLabel, d.yLabel, "Value"], rows: cells.map(([x, y, v]) => [xs[x]!, ys[y]!, v]) };

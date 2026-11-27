@@ -101,7 +101,7 @@ export function ChartConfigPanel({
   const needsMeasure = kind !== "histogram" && config.aggregation !== "count";
   const set = <K extends keyof ChartConfig>(k: K, v: ChartConfig[K], key?: string) => onChange((c) => ({ ...c, [k]: v }), key ?? `chart:${String(k)}`);
   const xCol = cols.find((c) => c.key === config.x);
-  const seriesNames = data ? (data.points ? [...new Set(data.points.map((p) => p.series ?? ""))].filter(Boolean) : data.tree ? data.tree.map((n) => n.name) : data.series.length > 1 || kind === "pie" || kind === "donut" ? (kind === "pie" || kind === "donut" ? data.categories : data.series.map((s) => s.name)) : []) : [];
+  const seriesNames = data ? (data.points ? [...new Set(data.points.map((p) => p.series ?? ""))].filter(Boolean) : data.tree ? data.tree.map((n) => n.name) : data.series.length > 1 || kind === "pie" || kind === "donut" || kind === "funnel" ? (kind === "pie" || kind === "donut" || kind === "funnel" ? data.categories : data.series.map((s) => s.name)) : []) : [];
   const colours = colourFor(seriesNames, config, FALLBACK_CHART_THEME);
 
   return (
@@ -133,7 +133,7 @@ export function ChartConfigPanel({
             </Select>
           </Field>
         )}
-        <Field label={kind === "scatter" ? "X axis (numeric)" : kind === "histogram" ? "Column to count (numeric)" : kind === "pie" || kind === "donut" || kind === "treemap" ? "Categories" : "X axis (categories)"} htmlFor={`${id}-x`}>
+        <Field label={kind === "scatter" ? "X axis (numeric)" : kind === "histogram" ? "Column to count (numeric)" : kind === "pie" || kind === "donut" || kind === "treemap" ? "Categories" : kind === "funnel" ? "Stages" : kind === "boxplot" ? "Group by (optional)" : "X axis (categories)"} htmlFor={`${id}-x`}>
           <Select id={`${id}-x`} value={config.x ?? ""} onChange={(e) => set("x", e.target.value || undefined, "chart:x")}>
             <option value="">Choose a column</option>
             {(numericX ? numeric : cols).map((c) => <option key={c.key} value={c.key}>{c.label} ({c.type})</option>)}
@@ -146,7 +146,7 @@ export function ChartConfigPanel({
             {numeric.length === 0 && <p className="text-xs text-muted-foreground">This dataset has no numeric columns. Use Count, or change a column&apos;s type when importing.</p>}
             {numeric.map((c) => {
               const on = config.y.includes(c.key);
-              const single = kind === "scatter" || kind === "pie" || kind === "donut" || kind === "treemap" || kind === "heatmap";
+              const single = kind === "scatter" || kind === "pie" || kind === "donut" || kind === "treemap" || kind === "heatmap" || kind === "funnel" || kind === "boxplot";
               return (
                 <Check key={c.key} id={`${id}-y-${c.key}`} checked={on} onChange={(v) => onChange((cur) => ({ ...cur, y: single ? (v ? [c.key] : []) : v ? [...cur.y, c.key] : cur.y.filter((k) => k !== c.key) }), "chart:y")}>
                   {c.label}
@@ -156,7 +156,23 @@ export function ChartConfigPanel({
           </fieldset>
         )}
 
-        {kind !== "histogram" && kind !== "pie" && kind !== "donut" && (
+        {kind === "combo" && config.y.length >= 2 && (
+          <fieldset className="grid gap-1">
+            <legend className="mb-1 text-sm font-medium text-foreground">Draw as a line</legend>
+            <p className="mb-1 text-xs text-muted-foreground">The rest are bars. With none ticked, the last measure is the line.</p>
+            {config.y.map((k) => {
+              const label = cols.find((c) => c.key === k)?.label ?? k;
+              return (
+                <Check key={k} id={`${id}-line-${k}`} checked={config.lines.includes(k)} onChange={(v) => onChange((cur) => ({ ...cur, lines: v ? [...cur.lines, k] : cur.lines.filter((x) => x !== k) }), "chart:lines")}>
+                  {label}
+                </Check>
+              );
+            })}
+            <Check id={`${id}-secondary`} checked={config.secondaryAxis} onChange={(v) => set("secondaryAxis", v)}>Use a second axis on the right for lines</Check>
+          </fieldset>
+        )}
+
+        {kind !== "histogram" && kind !== "pie" && kind !== "donut" && kind !== "funnel" && kind !== "boxplot" && (
           <Field label={kind === "heatmap" ? "Second axis (categories)" : "Series (split by)"} htmlFor={`${id}-s`} hint={kind === "heatmap" ? "Becomes the vertical axis." : "Optional. Splits the measure into one series per value."}>
             <Select id={`${id}-s`} value={config.series ?? ""} onChange={(e) => set("series", e.target.value || undefined, "chart:series")}>
               <option value="">None</option>
@@ -165,7 +181,7 @@ export function ChartConfigPanel({
           </Field>
         )}
 
-        {kind !== "scatter" && kind !== "histogram" && (
+        {kind !== "scatter" && kind !== "histogram" && kind !== "boxplot" && (
           <Field label="Aggregation" htmlFor={`${id}-a`} hint={config.aggregation === "count" ? "Counts rows in each group." : needsMeasure ? "How rows in the same group combine." : undefined}>
             <Select id={`${id}-a`} value={config.aggregation} onChange={(e) => set("aggregation", e.target.value as ChartConfig["aggregation"], "chart:agg")}>
               {AGGREGATIONS.map((a) => <option key={a} value={a}>{AGG_LABEL[a]}</option>)}

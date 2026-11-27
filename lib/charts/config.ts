@@ -3,6 +3,7 @@ import { z } from "zod";
 export const CHART_KINDS = [
   "bar", "hbar", "line", "area", "pie", "donut", "scatter",
   "stacked-bar", "grouped-bar", "multi-line", "heatmap", "histogram", "treemap",
+  "stacked-100", "combo", "boxplot", "funnel",
 ] as const;
 export type ChartKind = (typeof CHART_KINDS)[number];
 
@@ -27,6 +28,10 @@ export const KIND_META: Record<ChartKind, KindMeta> = {
   heatmap: { label: "Heatmap", group: "advanced", hint: "A measure across two categorical columns." },
   histogram: { label: "Histogram", group: "advanced", hint: "How the values of one numeric column are distributed." },
   treemap: { label: "Treemap", group: "advanced", hint: "Hierarchical proportions as nested rectangles." },
+  "stacked-100": { label: "100% stacked bar", group: "advanced", hint: "Each category's mix as a share of 100%, to compare composition." },
+  combo: { label: "Bar and line", group: "advanced", hint: "Bars for one measure and a line for another, optionally on a second axis." },
+  boxplot: { label: "Box plot", group: "advanced", hint: "The spread of one numeric column: median, quartiles and outliers, per group." },
+  funnel: { label: "Funnel", group: "advanced", hint: "Stages that shrink, such as sign-up to purchase." },
 };
 
 export const AGGREGATIONS = ["sum", "avg", "count", "min", "max"] as const;
@@ -72,6 +77,10 @@ export const chartConfigSchema = z.object({
   palette: z.string().max(40).default("theme"),
   colors: z.record(z.string(), hex).default({}),
   smooth: z.boolean().default(false),
+  /** Bar and line: which measures (column keys) are drawn as lines. Empty means the last measure. */
+  lines: z.array(z.string().max(200)).max(12).default([]),
+  /** Bar and line: draw the line measures against a second axis on the right. */
+  secondaryAxis: z.boolean().default(true),
   bins: z.number().int().min(2).max(60).optional(),
 });
 
@@ -101,4 +110,4 @@ export const PALETTES: Record<string, { label: string; colors: string[] | null; 
 export const isChartKind = (v: string): v is ChartKind => (CHART_KINDS as readonly string[]).includes(v);
 
 /** Which kinds put categories on the X axis and aggregate a measure per category. */
-export const CATEGORY_KINDS: readonly ChartKind[] = ["bar", "hbar", "line", "area", "pie", "donut", "stacked-bar", "grouped-bar", "multi-line", "treemap"];
+export const CATEGORY_KINDS: readonly ChartKind[] = ["bar", "hbar", "line", "area", "pie", "donut", "stacked-bar", "grouped-bar", "multi-line", "treemap", "stacked-100", "combo", "funnel"];

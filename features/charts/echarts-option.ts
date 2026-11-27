@@ -10,7 +10,7 @@ export interface OptionFlags {
   animate?: boolean;
 }
 
-const CARTESIAN = new Set(["bar", "hbar", "line", "area", "stacked-bar", "grouped-bar", "multi-line", "histogram"]);
+const CARTESIAN = new Set(["bar", "hbar", "line", "area", "stacked-bar", "grouped-bar", "multi-line", "histogram", "stacked-100", "combo"]);
 
 /**
  * ChartData + configuration → an Apache ECharts option. Pure: nothing here
@@ -32,7 +32,7 @@ export function buildEChartsOption(data: ChartData, config: ChartConfig, theme: 
   };
   // A few entries sit in a plain row at the bottom, all visible. Many entries would crush the
   // chart, so they move to a vertical list on the right that scrolls instead.
-  const legendNames: string[] = kind === "pie" || kind === "donut" ? data.categories : data.series.map((x) => x.name);
+  const legendNames: string[] = kind === "pie" || kind === "donut" || kind === "funnel" ? data.categories : data.series.map((x) => x.name);
   const MANY = 8;
   const many = legendNames.length > MANY;
   const legendPos: ChartConfig["legend"]["position"] = many && config.legend.show ? "right" : config.legend.position;
@@ -118,32 +118,87 @@ export function buildEChartsOption(data: ChartData, config: ChartConfig, theme: 
     };
   }
 
+  // ── Funnel ────────────────────────────────────────────────────────────────
+  if (kind === "funnel") {
+    const s = data.series[0];
+    const items = data.categories.map((name, i) => ({ name, value: s?.values[i] ?? 0 })).filter((d) => d.value > 0);
+    const colours = colourFor(items.map((d) => d.name), config, theme);
+    return {
+      ...common,
+      color: colours,
+      legend: legendBase(items.map((d) => d.name)),
+      series: [{
+        name: s?.name ?? "", type: "funnel", sort: "descending", gap: 3, minSize: "8%", maxSize: "100%",
+        left: grid.left + 8, right: grid.right + 8, top: grid.top, bottom: grid.bottom,
+        itemStyle: { borderColor: theme.surface, borderWidth: 2 },
+        label: { show: true, position: "inside", formatter: "{b}: {c}", color: theme.text, overflow: "truncate" },
+        data: items.map((d, i) => ({ ...d, label: { color: readableOn(colours[i]!, theme) } })),
+      }],
+    };
+  }
+
+  // ── Box plot ──────────────────────────────────────────────────────────────
+  if (kind === "boxplot" && data.box) {
+    const [accent] = colourFor(["box"], config, theme);
+    return {
+      ...common,
+      color: [accent!],
+      legend: { show: false },
+      grid: { ...grid, bottom: (xName ? 28 : 8) + 14 },
+      xAxis: { type: "category", data: data.categories, name: xName, nameLocation: "middle", nameGap: 28, axisLine, axisLabel: { hideOverlap: true, color: theme.text } },
+      yAxis: { type: "value", name: yName, nameLocation: "end", scale: true, axisLine, splitLine: split, axisLabel: { color: theme.text } },
+      series: [
+        { name: yName, type: "boxplot", data: data.box.stats, itemStyle: { color: accent, borderColor: theme.text, borderWidth: 1.5 }, tooltip: { confine: true } },
+        { name: "Outliers", type: "scatter", data: data.box.outliers, symbolSize: 5, itemStyle: { color: theme.muted, opacity: 0.7 }, tooltip: { show: false }, silent: true },
+      ],
+    };
+  }
+
   // ── Cartesian: bar family, line family, histogram ─────────────────────────
   const names = data.series.map((s) => s.name);
   const colours = colourFor(names, config, theme);
   const horizontal = kind === "hbar";
-  const stacked = kind === "stacked-bar";
+  const share = kind === "stacked-100";
+  const stacked = kind === "stacked-bar" || share;
+  const combo = kind === "combo" && data.series.length > 1;
+  // Bar and line: the chosen measures (or the last one) become lines, on a second axis if asked.
+  const lineSeries = new Set<number>(combo ? (config.lines.length ? data.series.map((_, i) => i).filter((i) => config.lines.includes(config.y[i] ?? "")) : [data.series.length - 1]) : []);
+  const secondary = combo && config.secondaryAxis && lineSeries.size > 0 && lineSeries.size < data.series.length;
+  const totals = data.categories.map((_, ci) => data.series.reduce((a, s) => a + Math.max(0, s.values[ci] ?? 0), 0));
   const isLine = kind === "line" || kind === "area" || kind === "multi-line";
   const counts = kind === "histogram" || config.aggregation === "count";
   const category = { type: "category", data: data.categories, name: xName, nameLocation: horizontal ? "end" : "middle", nameGap: 28, axisLine, axisLabel: { hideOverlap: true, color: theme.text }, ...(horizontal ? { inverse: true } : {}), ...(kind === "histogram" ? { axisTick: { alignWithLabel: true } } : {}) };
   const value = { type: "value", name: yName, nameLocation: horizontal ? "middle" : "end", nameGap: 30, axisLine, splitLine: split, axisLabel: { color: theme.text }, ...(counts ? { minInterval: 1 } : {}) };
-  const series = data.series.map((s, i) => ({
-    name: s.name,
-    type: isLine ? "line" : "bar",
-    data: s.values,
-    ...(stacked ? { stack: "total" } : {}),
-    ...(kind === "area" ? { areaStyle: { opacity: 0.25 } } : {}),
-    ...(isLine ? { smooth: config.smooth, symbolSize: 6, connectNulls: false } : { itemStyle: { borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] }, ...(kind === "histogram" ? { barCategoryGap: "4%" } : {}) }),
-    label: label({ position: stacked ? "inside" : isLine ? "top" : horizontal ? "right" : "top" }),
-    color: colours[i],
-  }));
+  const series = data.series.map((s, i) => {
+    const asLine = isLine || lineSeries.has(i);
+    return {
+      name: s.name,
+      type: asLine ? "line" : "bar",
+      data: share ? s.values.map((v, ci) => (v === null || !totals[ci] ? null : (Math.max(0, v) / totals[ci]!) * 100)) : s.values,
+      ...(stacked ? { stack: "total" } : {}),
+      ...(kind === "area" ? { areaStyle: { opacity: 0.25 } } : {}),
+      ...(secondary && lineSeries.has(i) ? { yAxisIndex: 1 } : {}),
+      ...(asLine ? { smooth: config.smooth, symbolSize: 6, connectNulls: false, ...(combo ? { z: 3 } : {}) } : { itemStyle: { borderRadius: horizontal ? [0, 4, 4, 0] : stacked ? 0 : [4, 4, 0, 0] }, ...(kind === "histogram" ? { barCategoryGap: "4%" } : {}) }),
+      label: label({ position: stacked ? "inside" : asLine ? "top" : horizontal ? "right" : "top", ...(share ? { formatter: (p: { value: number }) => `${Math.round(p.value)}%` } : {}) }),
+      color: colours[i],
+    };
+  });
+  const shareTooltip = share
+    ? { tooltip: { show: config.tooltips, trigger: "axis", confine: true, axisPointer: { type: "shadow" }, formatter: (params: { dataIndex: number; seriesName: string; marker: string; value: number | null }[]) => `${params[0] ? data.categories[params[0].dataIndex] : ""}<br/>${params.map((p) => `${p.marker} ${p.seriesName}: ${p.value === null ? "–" : `${Math.round(p.value * 10) / 10}%`} (${data.series.find((s) => s.name === p.seriesName)?.values[p.dataIndex] ?? "–"})`).join("<br/>")}` } }
+    : {};
+  const yAxis = secondary
+    ? [value, { ...value, name: data.series.filter((_, i) => lineSeries.has(i)).map((s) => s.name).join(", "), nameLocation: "end", position: "right", splitLine: { show: false } }]
+    : share
+      ? { ...value, max: 100, axisLabel: { color: theme.text, formatter: "{value}%" } }
+      : value;
   return {
     ...common,
     color: colours,
     legend: legendBase(data.series.length > 1 ? names : []),
-    grid,
-    xAxis: horizontal ? value : category,
-    yAxis: horizontal ? category : value,
+    ...shareTooltip,
+    grid: secondary ? { ...grid, right: grid.right + 56 } : grid,
+    xAxis: horizontal ? (share ? { ...value, max: 100, axisLabel: { color: theme.text, formatter: "{value}%" } } : value) : category,
+    yAxis: horizontal ? category : yAxis,
     series,
   };
 }

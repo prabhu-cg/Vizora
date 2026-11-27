@@ -360,3 +360,108 @@ describe("Format switching dialog", () => {
 });
 
 void getColor; void getExtras;
+
+describe("Canvas context menu", () => {
+  const canvas = (initial: VisualisationIR) => render(<Harness initial={initial}>{() => <div style={{ width: 900, height: 700 }}><EngineCanvas /></div>}</Harness>);
+  const rightClickNode = async (label: string) => {
+    const el = (await screen.findByText(label)).closest(".react-flow__node")!;
+    fireEvent.contextMenu(el);
+    return screen.findByRole("menu");
+  };
+  const rightClickPane = async () => {
+    fireEvent.contextMenu(document.querySelector(".react-flow__pane")!);
+    return screen.findByRole("menu");
+  };
+
+  it("flowchart: right-clicking empty canvas offers every kind of step, and adds the one you pick", async () => {
+    canvas(make(FLOW, "flowchart"));
+    await screen.findByText("Sign up");
+    const before = state().nodes.length;
+    const edgesBefore = state().edges.length;
+    const menu = await rightClickPane();
+    const items = within(menu).getAllByRole("menuitem").map((i) => i.textContent!.trim());
+    expect(items).toEqual(expect.arrayContaining(["Start", "Process", "Decision", "Input / output", "End", "Select all", "Fit to screen"]));
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Decision" }));
+    await waitFor(() => expect(state().nodes).toHaveLength(before + 1));
+    expect(state().nodes.at(-1)!.type).toBe("decision");
+    expect(state().edges).toHaveLength(edgesBefore); // placed freely: no connection was invented
+  });
+
+  it("flowchart: right-clicking a step offers connected steps, adds one with a connection, and never offers anything after End", async () => {
+    canvas(make(FLOW, "flowchart"));
+    const menu = await rightClickNode("Sign up");
+    const items = within(menu).getAllByRole("menuitem").map((i) => i.textContent!.trim());
+    expect(items).toEqual(expect.arrayContaining(["Process", "Decision", "Input / output", "End", "Rename", "Duplicate", "Delete step"]));
+    expect(items).not.toContain("Start"); // nothing starts after another step
+    const edgesBefore = state().edges.length;
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Process" }));
+    await waitFor(() => expect(state().edges).toHaveLength(edgesBefore + 1));
+    const added = state().nodes.at(-1)!;
+    expect(state().edges.at(-1)).toMatchObject({ source: nodeId("Sign up"), target: added.id });
+  });
+
+  it("mind map: add branch and sibling from a node; the root has no sibling and cannot be deleted", async () => {
+    canvas(make(MIND, "mindmap"));
+    let menu = await rightClickNode("Marketing");
+    expect(within(menu).getByRole("menuitem", { name: "Add sibling" })).not.toHaveAttribute("data-disabled");
+    expect(within(menu).getByRole("menuitem", { name: "Collapse branch" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Delete branch and its sub-branches/ })).toBeInTheDocument();
+    const count = state().nodes.length;
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Add branch" }));
+    await waitFor(() => expect(state().nodes).toHaveLength(count + 1));
+    await userEvent.keyboard("{Escape}");
+
+    menu = await rightClickNode("Launch");
+    expect(within(menu).getByRole("menuitem", { name: "Add sibling" })).toHaveAttribute("data-disabled");
+    expect(within(menu).getByRole("menuitem", { name: /Delete/ })).toHaveAttribute("data-disabled");
+  });
+
+  it("mind map: collapsing from the menu hides the branch", async () => {
+    canvas(make(MIND, "mindmap"));
+    const menu = await rightClickNode("Marketing");
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Collapse branch" }));
+    await waitFor(() => expect(screen.queryByText("Website")).toBeNull());
+  });
+
+  it("concept map: add a related concept from a node, or a concept where you click", async () => {
+    canvas(make(CONCEPT, "conceptmap"));
+    let menu = await rightClickNode("Customers");
+    const edges = state().edges.length;
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Add related concept" }));
+    await waitFor(() => expect(state().edges).toHaveLength(edges + 1));
+    await userEvent.keyboard("{Escape}");
+    const nodes = state().nodes.length;
+    menu = await rightClickPane();
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Add concept here" }));
+    await waitFor(() => expect(state().nodes).toHaveLength(nodes + 1));
+  });
+
+  it("timeline: add an event after the one you clicked", async () => {
+    canvas(make(TIME, "timeline"));
+    const menu = await rightClickNode("Kick-off");
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Add event after" }));
+    await waitFor(() => expect(state().nodes).toHaveLength(4));
+    expect(state().nodes[1]!.label).not.toBe("Build"); // inserted right after Kick-off
+  });
+
+  it("right-clicking an unselected item selects it, so Delete acts on that item", async () => {
+    canvas(make(FLOW, "flowchart"));
+    const menu = await rightClickNode("Welcome");
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Delete step" }));
+    await waitFor(() => expect(screen.queryByText("Welcome")).toBeNull());
+    expect(screen.getByText("Sign up")).toBeInTheDocument();
+  });
+
+  it("the empty-canvas menu on a mind map only offers a central topic when there is none", async () => {
+    canvas(make(MIND, "mindmap"));
+    await screen.findByText("Launch");
+    const menu = await rightClickPane();
+    expect(within(menu).getByRole("menuitem", { name: "Add central topic" })).toHaveAttribute("data-disabled");
+  });
+
+  it("menus carry the animation class so they fade in and out", async () => {
+    canvas(make(FLOW, "flowchart"));
+    await screen.findByText("Sign up");
+    expect(await rightClickPane()).toHaveClass("vz-menu");
+  });
+});

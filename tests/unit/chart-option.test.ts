@@ -23,6 +23,8 @@ const FIXTURES: Record<string, Partial<ChartConfig>> = {
   "stacked-bar": { kind: "stacked-bar", ...BASE, series: "channel" }, "grouped-bar": { kind: "grouped-bar", x: "region", y: ["units", "price"] },
   "multi-line": { kind: "multi-line", x: "when", y: ["units", "price"] }, heatmap: { kind: "heatmap", x: "region", series: "channel", y: ["units"] },
   histogram: { kind: "histogram", x: "units" }, treemap: { kind: "treemap", ...BASE, series: "channel" },
+  "stacked-100": { kind: "stacked-100", ...BASE, series: "channel" }, combo: { kind: "combo", x: "region", y: ["units", "price"] },
+  boxplot: { kind: "boxplot", x: "region", y: ["units"] }, funnel: { kind: "funnel", ...BASE },
 };
 
 describe("chart option builder", () => {
